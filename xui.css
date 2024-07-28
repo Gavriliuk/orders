@@ -1,0 +1,110 @@
+body[init] {opacity:0}
+body {opacity:1;transition:opacity 1s}
+
+/* explicit colors */
+:root {
+--color-white:#fff;--color-black:#000;--color-dark-grey:#888;
+--color-blue:#08f;--color-light-blue:#2af;
+--color-red:#e44;--color-light-red:#f66;
+--color-bg:#ffe;--color-fg:#004;--color-ctrl:#26a69a;
+}
+
+/* implicit colors */
+:root {
+/*--color-main-bg:var(--color-bg);
+--color-main-fg:var(--color-fg);*/
+--color-navi-bg:var(--color-ctrl);
+--color-navi-fg:var(--color-white);
+--color-head-bg:#08c;
+--color-head-fg:var(--color-white);
+--color-item-bg:var(--color-white);
+--color-item-fg:var(--color-black);
+--color-href-fg:#06a;
+/*--color-btn-bg:#06a;
+--color-btn-fg:#fff;
+--color-btn-hover-bg:#0ad;
+--color-btn-focus-bg:#a00;*/
+}
+
+body
+{background-color:var(--color-bg);color:var(--color-fg)}
+
+#app>header,#app>footer
+{background-color:var(--color-navi-bg);color:var(--color-navi-fg)}
+
+nav {background-color:inherit}
+/*nav ul a {font-size:inherit}*/
+
+.caption {color:var(--color-ctrl);font-weight:bold}
+form input[type="submit"] {color:var(--color-navi-fg);cursor:pointer}
+form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px solid black}
+
+.collection.with-header .collection-header
+{background-color:var(--color-head-bg);color:var(--color-head-fg)}
+.collection .collection-item
+{background-color:var(--color-item-bg);color:var(--color-item-fg)}
+.collection a.collection-item
+{background-color:var(--color-item-bg);color:var(--color-href-fg)}
+
+/*.btn, .btn-large, .btn-small, .btn-like
+{background-color:var(--color-btn-bg);color:var(--color-btn-fg)}
+.btn:hover, .btn-large:hover, .btn-small:hover
+{background-color:var(--color-btn-hover-bg)}
+.btn:focus, .btn-large:focus, .btn-small:focus
+{background-color:var(--color-btn-focus-bg)}*/
+
+/* radius */
+:root {
+--collection-radius:2em;
+--button-radius:1em;
+}
+
+.collection.with-header
+{border-radius:var(--collection-radius)}
+.collection.with-header .collection-header
+{border-radius:var(--collection-radius) var(--collection-radius) 0 0}
+.collection.with-header .collection-item:last-child
+{border-radius:0 0 var(--collection-radius) var(--collection-radius)}
+
+.last.row {margin-bottom:0}
+.row .col {overflow:hidden;text-overflow:ellipsis}
+
+a[role=button] {cursor:pointer;transition:color 0.3s}
+a[role=button]:hover {color:crimson}
+
+.btn/*, .Xbtn-large, .btn-small, .btn-like*/
+{border-radius:var(--button-radius)}
+
+body:not([signed]) .signed, body[signed] .unsigned {display:none}
+
+@media only screen and (min-width: 993px) {.container {width:900px}}
+@media only screen and (min-width: 1201px) {.container {width:75%}}
+
+.modal .modal-footer {height:4.5em;text-align:center}
+.no-wrap {overflow:hidden;white-space:nowrap}
+
+.page-header table tr {border-width:0}
+.page-header table td {padding:0;vertical-align:top}
+
+.page-header .nav-signed i {overflow:hidden}
+body:not([signed]) .page-header .nav-signed i {width:0}
+
+.page-header a.lang {padding:12px 2px}
+@media only screen and (min-width: 601px) {.page-header a.lang {padding:16px 4px}}
+.page-header a.lang img {display:block;border-radius:16px}
+
+#page-login form {display:table;margin:20vh auto}
+
+#page-main .card-panel {margin:10vh auto}
+#page-main .buttons {text-align:center}
+@media only screen and (min-width: 993px) {#page-main .buttons {text-align:right}}
+
+#page-msgs .card-panel.list {margin:10vh auto}
+#page-msgs .card-panel.fallback {display:table;margin:30vh auto}
+
+#page-setup .card-panel {margin:10vh auto}
+#page-setup .buttons {text-align:center}
+#page-setup .buttons a.lang {margin:0 4px}
+#page-setup .buttons a.lang img {border-radius:16px;margin:2px auto}
+@media only screen and (min-width: 601px) {#page-setup .buttons {text-align:right}}
+

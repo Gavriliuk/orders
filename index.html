@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="application-name" content="Orders">
+<meta name="apple-mobile-web-app-title" content="Orders">
+<meta name="msapplication-starturl" content="/">
+<meta name="msapplication-TileColor" content="#ffffff">
+<meta name="msapplication-TileImage" content="ico/ms-icon-144x144.png">
+<meta name="theme-color" content="#ffffff">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="57x57" href="ico/apple-icon-57x57.png">
+<link rel="apple-touch-icon" sizes="60x60" href="ico/apple-icon-60x60.png">
+<link rel="apple-touch-icon" sizes="72x72" href="ico/apple-icon-72x72.png">
+<link rel="apple-touch-icon" sizes="76x76" href="ico/apple-icon-76x76.png">
+<link rel="apple-touch-icon" sizes="114x114" href="ico/apple-icon-114x114.png">
+<link rel="apple-touch-icon" sizes="120x120" href="ico/apple-icon-120x120.png">
+<link rel="apple-touch-icon" sizes="144x144" href="ico/apple-icon-144x144.png">
+<link rel="apple-touch-icon" sizes="152x152" href="ico/apple-icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="ico/apple-icon-180x180.png">
+<link rel="icon" type="image/png" sizes="192x192"  href="ico/android-icon-192x192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="ico/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="96x96" href="ico/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="16x16" href="ico/favicon-16x16.png">
+<link rel="stylesheet" type="text/css" href="material-icons.css" media="screen,projection" />
+<link rel="stylesheet" type="text/css" href="materialize.min.css" media="screen,projection" />
+<link rel="stylesheet" type="text/css" href="xui.css" media="screen,projection" />
+<script type="text/javascript" src="materialize.min.js"></script>
+<script type="text/javascript" src="platform.js"></script>
+<script type="text/javascript" src="translate.js"></script>
+<script type="text/javascript" src="vue.js"></script>
+<script type="text/javascript" src="xtr.js"></script>
+
+</head>
+
+<body init>
+
+<div id="app">
+
+<header class="page-header navbar-fixed no-select flow-text">
+<nav><div class="nav-wrapper container"><table><tr>
+ <td><div class="title">{{tr(d.p.title||d.a.title)}}</div></td>
+ <td><ul class="right">
+ <li v-for="lang in this.langs" class="right unsigned"><a class="js lang" :onclick="'app.lang(\''+lang+'\')'"><img height="32" width="32" :src="'lang-'+lang+'.svg'"/></a></li>
+ <li v-if="d.a.not" class="nav-signed"><a class="js yellow-text" onclick="app.showMsg()">{{d.a.not}}<i class="material-icons right">notifications_active</i></a></li>
+ <li v-else class="nav-signed"><a class="js" onclick="app.showPage('msgs')"><i class="material-icons">notifications_none</i></a></li>
+ <li class="nav-signed"><a class="js" onclick="app.logout()"><i class="material-icons">exit_to_app</i></a></li>
+ </ul></td>
+</tr></table></div></nav>
+</header>
+
+<div id="page-login" class="page container unsigned">
+<form class="card-panel hoverable" onsubmit="try{app.login(this.username.value,this.password.value)}catch(e){app.err(e)};return false">
+<div class="caption flow-text no-select center">{{tr('Please log in to start working')}}</div>
+<div class="input-field"><input id="login-username" name="username" type="text"/><label for="login-username">{{tr('Username')}}:</label></div>
+<div class="input-field"><input id="login-password" name="password" type="password"/><label for="login-password">{{tr('Password')}}:</label></div>
+<div class="buttons center"><i class="waves-effect waves-light btn waves-input-wrapper" onclick="document.querySelector('#page-login input[type=\'submit\']').click()">
+ <input type="submit" class="waves-button-input" :value="tr('Log in')"/>
+</i></div>
+</form>
+</div>
+
+<div class="page container signed">
+
+<div v-if="d.p.name=='main'" id="page-main">
+<div class="card-panel hoverable no-wrap flow-text no-select">
+<div class="row">
+ <div class="col s12 l4 caption">{{tr('Data loaded')}}:</div>
+ <div class="col s12 l4 right-align">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</div>
+ <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></div>
+</div>
+<div class="row">
+ <div class="col s12 l4 caption">{{tr('Orders to upload')}}:</div>
+ <div class="col s12 l4 right-align">{{d.a.data.doc.filter(d=>!d.nrdoc).length||tr('No data')}}</div>
+ <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbExport()">{{tr('Upload')}}</a></div>
+</div>
+<div class="last row">
+ <div class="col s12 l4 caption">{{tr('Orders uploaded')}}:</div>
+ <div class="col s12 l4 right-align">{{d.a.data.doc.filter(d=>d.nrdoc).length||tr('No data')}}</div>
+ <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn pink accent-3" onclick="app.showPage('order')">{{tr('New order')}}</a></div>
+</div>
+</div>
+</div>
+
+<div v-if="d.p.name=='order'" id="page-order">
+</div>
+
+<div v-if="d.p.name=='docs'" id="page-docs">
+</div>
+
+<div v-if="d.p.name=='msgs'" id="page-msgs">
+<div v-if="d.a.data.msg&&d.a.data.msg.length" class="card-panel hoverable no-wrap flow-text no-select list">
+<div v-for="m in d.a.data.msg" class="row">
+ <div class="col s12 l4 caption">{{m.id}} ({{fmtdT(m.ts)}})</div>
+ <div class="col s1 l1 caption"><i v-if="!m.read" class="material-icons yellow-text">notifications_active</i></div>
+ <div class="col s9 l6"><a class="js" role="button" :onclick="'app.showMsg('+m.id+')'">{{m.t}}</a></div>
+ <div class="col s2 l1 right-align"><a v-if="!m.ok" class="js waves-effect waves-light btn" :onclick="'app.deleteMsg('+m.id+')'"><i class="material-icons">delete</i></a></div>
+</div>
+</div>
+<div v-else class="card-panel hoverable no-wrap flow-text no-select caption fallback">{{tr('No data')}}</div>
+</div>
+
+<div v-if="d.p.name=='clients'" id="page-clients">
+</div>
+
+<div v-if="d.p.name=='setup'" id="page-setup">
+<div class="card-panel hoverable no-wrap flow-text no-select">
+<div class="row">
+ <div class="col s12 l4 caption">{{tr('Current user')}}:</div>
+ <div class="col s12 l4">{{this.app.username}}</div>
+ <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.chgpwd()">{{tr('Change password')}}</a></div>
+</div>
+<div class="row">
+ <div class="col s12 l4 caption">{{tr('Chosen language')}}:</div>
+ <div class="col s12 l4">{{tr({en:'English',ru:'Russian',ro:'Romanian'}[app.vm.lang()])}}</div>
+ <div class="col s12 l4 buttons">
+  <a class="js btn lang" v-for="lang in this.langs" :onclick="'app.lang(\''+lang+'\')'"><img height="32" width="32" :src="'lang-'+lang+'.svg'"/></a>
+ </div>
+</div>
+<div v-if="backuped()" class="row">
+ <div class="col s12 l4 caption">{{tr('Local data stored')}}</div>
+ <div class="col s12 l8 buttons"><a class="js btn" onclick="localStorage.clear()||app.vm.$forceUpdate()">{{tr('Clear local storage')}}</a></div>
+</div>
+<div v-else class="row">
+ <div class="col s12 l4 caption">{{tr('Local data not stored')}}</div>
+ <div class="col s12 l8 buttons"><a class="js btn" onclick="app.backup()||app.vm.$forceUpdate()">{{tr('Store local data')}}</a></div>
+</div>
+<div v-if="installed()" class="row">
+ <div class="col s12 l4 caption">{{tr('Application installed')}}</div>
+ <div class="col s12 l8 buttons"><a class="js btn" onclick="app.uninstall()">{{tr('Uninstall')}}</a></div>
+</div>
+<div v-else class="row">
+ <div class="col s12 l4 caption">{{tr('Application not installed')}}</div>
+ <div class="col s12 l8 buttons"><a class="js btn" onclick="app.install()">{{tr('Install')}}</a></div>
+</div>
+</div>
+</div>
+
+<div class="fixed-action-btn no-select signed">
+<a class="btn-floating btn-large"><i class="large material-icons">menu</i></a>
+<ul>
+<li><a class="btn-floating" onclick="app.showPage()"><i class="material-icons">home</i></a></li>
+<li><a class="btn-floating pink accent-3" onclick="app.showPage('order')"><i class="material-icons">note_add</i></a></li>
+<li><a class="btn-floating" onclick="app.showPage('docs')"><i class="material-icons">note</i></a></li>
+<li><a class="btn-floating" onclick="app.showPage('msgs')"><i :class="'material-icons'+(d.a.not?' yellow-text':'')">mail</i></a></li>
+<li><a class="btn-floating" onclick="app.showPage('setup')"><i class="material-icons">settings</i></a></li>
+</ul>
+</div>
+
+</div>
+
+<div id="modal-msgbox" class="modal">
+ <div class="modal-content flow-text">
+  <div class="caption center">{{d.m.msgbox.caption}}</div>
+  <div>{{d.m.msgbox.text}}</div>
+ </div>
+ <div class="modal-footer">
+  <a class="js waves-effect waves-light btn modal-close Xwaves-effect Xwaves-green Xbtn-flat" onclick="app.vm.d.m.msgbox.ok=true">OK</a>
+  <a v-if="d.m.msgbox.ok!=null" class="js waves-effect waves-light btn modal-close Xwaves-effect Xwaves-green Xbtn-flat">{{tr('Cancel')}}</a>
+ </div>
+</div>
+
+<div id="modal-chgpwd" class="modal">
+ <div class="modal-content flow-text">
+  <div class="caption center">{{tr('Enter a new password')}}</div>
+  <div class="input-field"><input id="change-password-1" type="password"/><label for="change-password-1">{{tr('Password')}}:</label></div>
+  <div class="input-field"><input id="change-password-2" type="password"/><label for="change-password-2">{{tr('Password')}}:</label></div>
+ </div>
+ <div class="modal-footer">
+  <a class="js waves-effect waves-light btn modal-close" onclick="app.vm.d.m.chgpwd.ok=true">OK</a>
+ </div>
+</div>
+
+<div id="modal-query" class="modal">
+ <div class="modal-content flow-text">
+  <div class="caption center">{{d.m.query.caption}}</div>
+  <div>{{d.m.query.status}}</div>
+  <div class="right-align">{{tr('Waiting time')}}: {{d.m.query.time}} {{tr('sec.')}}</div>
+ </div>
+ <div class="modal-footer">
+  <a v-if="d.m.query.ok" class="js waves-effect waves-light btn modal-close">OK</a>
+  <a v-else class="js waves-effect waves-light btn modal-close">{{tr('Cancel')}}</a>
+ </div>
+</div>
+
+</div>
+
+<script type="text/javascript" src="xui.js"></script>
+
+</body>
+
+</html>
