@@ -1,6 +1,8 @@
 const app={}
 
-app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',signed:0,not:0,data:{ts:'',msg:[],doc:[],lst:[],rep:[]}},p:{name:'',title:'',data:{}}
+app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',signed:0,not:0
+  ,data:{ts:'',msg:[],doc:[],lst:[],rep:[]}}
+ ,p:{name:'',title:'',data:{}}
  ,m:{msgbox:{caption:'',text:'',ok:false},chgpwd:{ok:false},query:{caption:'',status:'',time:0,ok:false}}}}
 ,computed:{app:x=>app,langs:x=>tr.prototype.list}
 ,methods:{
@@ -8,6 +10,8 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
 ,lang:x=>tr.prototype.lang
 ,installed:x=>app.sw
 ,backuped:x=>localStorage.getItem('userdata.ts')
+,session:s=>s?localStorage.setItem('userdata.session',Math.max(0,Number(s)||0)):Number(localStorage.getItem('userdata.session'))||0
+,timeout:t=>t?localStorage.setItem('userdata.timeout',Math.max(30,Math.min(600,Number(t)||0))):Number(localStorage.getItem('userdata.timeout'))||300
 ,fmtD:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric'})
 ,fmtdT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
 ,fmtDT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
@@ -126,7 +130,6 @@ app.login=async(username,password)=>{
  }else{
   app.restore()
  }
- app.session=0
  app.username=username
  app.password=password
  localStorage.setItem('username',username)
@@ -165,9 +168,8 @@ app.showPage=(name,data)=>{
 
 app.query=(request,caption,resolve)=>{
  const controller=new AbortController()
- const timeout=AbortSignal.timeout(30000);
- const signal=controller.signal
- const uri='api/o?r='+encodeURIComponent(JSON.stringify(request))
+ const timeout=AbortSignal.timeout(app.vm.timeout()*1000);
+ const uri='api/s?r='+encodeURIComponent(JSON.stringify(request))
  app.vm.d.m.query.caption=tr(caption)
  app.vm.d.m.query.status=tr('Connection is in progress')
  app.vm.d.m.query.time=0
@@ -180,28 +182,33 @@ app.query=(request,caption,resolve)=>{
   if(!app.vm.d.m.query.ok)controller.abort()
  }
  modal.open()
- fetch(uri,{signal:AbortSignal.any([controller.signal,timeout])}).then(response=>{
+ const signal=AbortSignal.any?AbortSignal.any([controller.signal,timeout]):controller.signal
+ fetch(uri,{referrer:'',referrerPolicy:'no-referrer',signal:signal}).then(response=>{
   clearInterval(interval)
-  if(!response.ok)throw new Error('Not OK. '+response.status)
+  if(!response.ok)throw Error('Not OK. '+response.status)
   return response.json()
  }).then(data=>{
+  if(data.error)throw Error(data.error,{cause:data.trace})
   app.vm.d.m.query.status=tr('Transaction success')
   app.vm.d.m.query.ok=true
   resolve(data)
  }).catch(error=>{
   clearInterval(interval)
+  app.err(error)
+  if(error.cause)app.log(error.cause)
   app.vm.d.m.query.ok=true
   app.vm.d.m.query.status=tr('Error')+': '+error.message
+  app.vm.d.m.query.trace=error.trace
  })
 }
 
 app.dbRefresh=x=>{
- const request={cmd:'dbrefresh',usr:app.username,pwd:app.password}
+ const request={cmd:'dbrefresh',usr:app.username,pwd:app.password,session:app.vm.session()}
  app.query(request,'Refresh database',data=>{
-  app.vm.d.a.data.ts=data.ts
-  app.vm.d.a.data.doc=data.doc
-  app.vm.d.a.data.msg=data.msg
-  app.vm.d.a.not=data.msg.filter(m=>!m.read).length
+  app.vm.session(data.session)
+  app.vm.d.a.data.ts=new Date
+  app.vm.d.a.data.lst=data
+  app.vm.d.a.not=data.msg&&data.msg.filter?data.msg.filter(m=>!m.read).length:0
   app.backup()
  })
 }
@@ -227,6 +234,14 @@ app.showMsg=id=>{
 app.deleteMsg=id=>{
  for(let i=app.vm.d.a.data.msg.length-1;i>=0;--i)if(app.vm.d.a.data.msg[i].id==id)app.vm.d.a.data.msg.splice(i,1)
  app.backup()
+}
+
+app.modifyTimeout=()=>{
+ const t0=app.vm.timeout()
+ const t1=prompt(tr('Network timeout limit')+':',t0);
+ if(!t1)return
+ app.vm.timeout(t1)
+ if(t0!=app.vm.timeout())app.vm.$forceUpdate()
 }
 
 app.install=async x=>{

@@ -117,6 +117,16 @@
  <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.chgpwd()">{{tr('Change password')}}</a></div>
 </div>
 <div class="row">
+ <div class="col s12 l4 caption">{{tr('Current session')}}:</div>
+ <div class="col s12 l4">{{session()}}</div>
+ <div class="col s12 l4 buttons">&nbsp;</div>
+</div>
+<div class="row">
+ <div class="col s12 l4 caption">{{tr('Network timeout limit')}}:</div>
+ <div class="col s12 l4">{{timeout()}} {{tr('sec.')}}</div>
+ <div class="col s12 l4 buttons"><a class="js btn" onclick="app.modifyTimeout()">{{tr('Modify')}}</a></div>
+</div>
+<div class="row">
  <div class="col s12 l4 caption">{{tr('Chosen language')}}:</div>
  <div class="col s12 l4">{{tr({en:'English',ru:'Russian',ro:'Romanian'}[app.vm.lang()])}}</div>
  <div class="col s12 l4 buttons">
@@ -132,12 +142,12 @@
  <div class="col s12 l8 buttons"><a class="js btn" onclick="app.backup()||app.vm.$forceUpdate()">{{tr('Store local data')}}</a></div>
 </div>
 <div v-if="installed()" class="row">
- <div class="col s12 l4 caption">{{tr('Application installed')}}</div>
- <div class="col s12 l8 buttons"><a class="js btn" onclick="app.uninstall()">{{tr('Uninstall')}}</a></div>
+ <div class="col s12 l6 caption">{{tr('Application installed')}}</div>
+ <div class="col s12 l6 buttons"><a class="js btn" onclick="app.uninstall()">{{tr('Uninstall')}}</a></div>
 </div>
 <div v-else class="row">
- <div class="col s12 l4 caption">{{tr('Application not installed')}}</div>
- <div class="col s12 l8 buttons"><a class="js btn" onclick="app.install()">{{tr('Install')}}</a></div>
+ <div class="col s12 l6 caption">{{tr('Application not installed')}}</div>
+ <div class="col s12 l6 buttons"><a class="js btn" onclick="app.install()">{{tr('Install')}}</a></div>
 </div>
 </div>
 </div>
