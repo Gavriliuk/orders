@@ -158,6 +158,7 @@ app.showPage=(name,data)=>{
   app.vm.d.p.title=tr(title)
   app.vm.d.p.data=data
  }
+ M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
  if(name=='serverdata')return setup('Server Data',data)
  app.pageServerDataStack=[]
  if(name=='order')return data?setup('Document #'+data.id,data):setup('New document')
