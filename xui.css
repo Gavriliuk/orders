@@ -41,6 +41,8 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 
 .collection.with-header .collection-header
 {background-color:var(--color-head-bg);color:var(--color-head-fg)}
+.collection.with-header .collection-header a
+{color:var(--color-head-fg)}
 .collection .collection-item
 {background-color:var(--color-item-bg);color:var(--color-item-fg)}
 .collection a.collection-item
@@ -68,6 +70,9 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 
 .last.row {margin-bottom:0}
 .row .col {overflow:hidden;text-overflow:ellipsis}
+
+a.js[onclick] {cursor:pointer}
+a.js[onclick]:hover {text-decoration:underline}
 
 a[role=button] {cursor:pointer;transition:color 0.3s}
 a[role=button]:hover {color:crimson}

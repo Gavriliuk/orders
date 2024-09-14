@@ -48,6 +48,7 @@
  <td><div class="title">{{tr(d.p.title||d.a.title)}}</div></td>
  <td><ul class="right">
  <li v-for="lang in this.langs" class="right unsigned"><a class="js lang" :onclick="'app.lang(\''+lang+'\')'"><img height="32" width="32" :src="'lang-'+lang+'.svg'"/></a></li>
+ <li v-if="d.p.name!='main'" class="nav-signed"><a class="js" onclick="app.showPage()"><i class="material-icons">home</i></a></li>
  <li v-if="d.a.not" class="nav-signed"><a class="js yellow-text" onclick="app.showMsg()">{{d.a.not}}<i class="material-icons right">notifications_active</i></a></li>
  <li v-else class="nav-signed"><a class="js" onclick="app.showPage('msgs')"><i class="material-icons">notifications_none</i></a></li>
  <li class="nav-signed"><a class="js" onclick="app.logout()"><i class="material-icons">exit_to_app</i></a></li>
@@ -71,7 +72,7 @@
 <div v-if="d.p.name=='main'" id="page-main">
 <div class="card-panel hoverable no-wrap flow-text no-select">
 <div class="row">
- <div class="col s12 l4 caption">{{tr('Data loaded')}}:</div>
+ <div class="col s12 l4 caption"><a class="js" onclick="app.showPageServerData()">{{tr('Data loaded')}}:</a></div>
  <div class="col s12 l4 right-align">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</div>
  <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></div>
 </div>
@@ -107,6 +108,22 @@
 </div>
 
 <div v-if="d.p.name=='clients'" id="page-clients">
+</div>
+
+<div v-if="d.p.name=='serverdata'" id="page-serverdata">
+<div class="collection with-header flow-text no-select">
+<div class="collection-header last row caption">
+ <a class="col l6 s12" :class="d.p.data[2]?'js':null"
+  :onclick="d.p.data[2]?'app.showPageServerData(-1)':null"><i v-if="d.p.data[2]" class="material-icons">arrow_upward</i>{{d.p.data[1]}}</a>
+ <div class="col l6 s12">{{d.p.data[2]||'/'}}</div>
+</div>
+<a v-for="(n,i) in Array.isArray(d.p.data[0])?d.p.data[0]:Object.keys(d.p.data[0])" class="collection-item"
+ :class="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?'js':null"
+ :onclick="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?('app.showPageServerData(1,'+(Array.isArray(d.p.data[0])?i:'\''+n+'\'')+')'):null">
+ {{Array.isArray(d.p.data[0])?'':(n+':')}}
+ {{Array.isArray(d.p.data[0])?(n.n||n):Array.isArray(d.p.data[0][n])?('['+d.p.data[0][n].length+']'):(d.p.data[0][n]&&d.p.data[0][n].n||d.p.data[0][n])}}
+</a>
+</div>
 </div>
 
 <div v-if="d.p.name=='setup'" id="page-setup">
@@ -155,7 +172,6 @@
 <div class="fixed-action-btn no-select signed">
 <a class="btn-floating btn-large"><i class="large material-icons">menu</i></a>
 <ul>
-<li><a class="btn-floating" onclick="app.showPage()"><i class="material-icons">home</i></a></li>
 <li><a class="btn-floating pink accent-3" onclick="app.showPage('order')"><i class="material-icons">note_add</i></a></li>
 <li><a class="btn-floating" onclick="app.showPage('docs')"><i class="material-icons">note</i></a></li>
 <li><a class="btn-floating" onclick="app.showPage('msgs')"><i :class="'material-icons'+(d.a.not?' yellow-text':'')">mail</i></a></li>

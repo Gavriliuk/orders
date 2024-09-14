@@ -152,11 +152,14 @@ app.logout=async ()=>{
 }
 
 app.showPage=(name,data)=>{
+ //app.log('showPage',name,(''+JSON.stringify(data)).substr(0,100))
  const setup=(title,data)=>{
   app.vm.d.p.name=name
   app.vm.d.p.title=tr(title)
   app.vm.d.p.data=data
  }
+ if(name=='serverdata')return setup('Server Data',data)
+ app.pageServerDataStack=[]
  if(name=='order')return data?setup('Document #'+data.id,data):setup('New document')
  if(name=='docs')return setup('Documents')
  if(name=='msgs')return setup('Messages')
@@ -164,6 +167,24 @@ app.showPage=(name,data)=>{
  if(name=='setup')return setup('Settings')
  name='main'
  setup('Current state')
+}
+
+app.pageServerDataStack=[]
+
+app.showPageServerData=(mode,key)=>{
+ //app.log('app.showPageServerData('+mode+','+key+')')
+ let data=null
+ if(mode==-1&&app.pageServerDataStack.length)data=app.pageServerDataStack.pop()
+ else if(mode==1){
+  app.pageServerDataStack.push(app.vm.d.p.data)
+  const title=Array.isArray(app.vm.d.p.data[0])?(app.vm.d.p.data[0][key].n||(app.vm.d.p.data[2]+'['+key+']')):key
+  const spath=Array.isArray(app.vm.d.p.data[0])?('['+key+']'):('/'+key)
+  data=[app.vm.d.p.data[0][key],title,app.vm.d.p.data[2]+spath]
+ }else{
+  app.pageServerDataStack=[]
+  data=[app.vm.d.a.data.lst,'root','']
+ }
+ app.showPage('serverdata',data)
 }
 
 app.query=(request,caption,resolve)=>{
