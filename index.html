@@ -123,9 +123,10 @@
 <a v-for="(n,i) in Array.isArray(d.p.data[0])?d.p.data[0]:Object.keys(d.p.data[0])" class="collection-item"
  :class="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?'js':null"
  :onclick="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?('app.showPageServerData(1,'+(Array.isArray(d.p.data[0])?i:'\''+n+'\'')+')'):null">
- {{Array.isArray(d.p.data[0])?'':(n+':')}}
+ {{Array.isArray(d.p.data[0])?(n&&n.i&&n.n?(n.i+':'):''):(n+':')}}
  {{Array.isArray(d.p.data[0])?(n.n||n):Array.isArray(d.p.data[0][n])?('['+d.p.data[0][n].length+']'):(d.p.data[0][n]&&d.p.data[0][n].n||d.p.data[0][n])}}
 </a>
+<div v-if="!(Array.isArray(d.p.data[0])?d.p.data[0]:Object.keys(d.p.data[0])).length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
