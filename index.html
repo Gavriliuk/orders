@@ -77,12 +77,12 @@
  <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></div>
 </div>
 <div class="row">
- <div class="col s12 l4 caption">{{tr('Orders to upload')}}:</div>
+ <div class="col s12 l4 caption"><a class="js" onclick="app.showPage('orders')">{{tr('Orders to upload')}}:</a></div>
  <div class="col s12 l4 right-align">{{d.a.data.doc.filter(d=>!d.nrdoc).length||tr('No data')}}</div>
  <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbExport()">{{tr('Upload')}}</a></div>
 </div>
 <div class="last row">
- <div class="col s12 l4 caption">{{tr('Orders uploaded')}}:</div>
+ <div class="col s12 l4 caption"><a class="js" onclick="app.showPage('docs')">{{tr('Orders uploaded')}}:</a></div>
  <div class="col s12 l4 right-align">{{d.a.data.doc.filter(d=>d.nrdoc).length||tr('No data')}}</div>
  <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn pink accent-3" onclick="app.showPage('order')">{{tr('New order')}}</a></div>
 </div>
@@ -90,6 +90,9 @@
 </div>
 
 <div v-if="d.p.name=='order'" id="page-order">
+</div>
+
+<div v-if="d.p.name=='orders'" id="page-orders">
 </div>
 
 <div v-if="d.p.name=='docs'" id="page-docs">

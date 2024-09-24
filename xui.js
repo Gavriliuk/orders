@@ -153,16 +153,17 @@ app.logout=async ()=>{
 
 app.showPage=(name,data)=>{
  //app.log('showPage',name,(''+JSON.stringify(data)).substr(0,100))
- const setup=(title,data)=>{
+ const setup=(title,index)=>{
   app.vm.d.p.name=name
-  app.vm.d.p.title=tr(title)
   app.vm.d.p.data=data
+  app.vm.d.p.title=tr(title)+(index?' #'+index:'')
  }
  M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
- if(name=='serverdata')return setup('Server Data',data)
+ if(name=='serverdata')return setup('Server Data')
  app.pageServerDataStack=[]
- if(name=='order')return data?setup('Document #'+data.id,data):setup('New document')
- if(name=='docs')return setup('Documents')
+ if(name=='order')return data?setup('Order',data.id):setup('New order')
+ if(name=='orders')return setup('Orders to upload')
+ if(name=='docs')return setup('Orders uploaded')
  if(name=='msgs')return setup('Messages')
  if(name=='clients')return setup('Clients')
  if(name=='setup')return setup('Settings')

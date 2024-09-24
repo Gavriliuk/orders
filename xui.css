@@ -57,7 +57,7 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 
 /* radius */
 :root {
---collection-radius:2em;
+--collection-radius:1em;
 --button-radius:1em;
 }
 
