@@ -168,6 +168,7 @@ app.showPage=(name,data)=>{
  if(name=='orders')return setup('Orders to upload')
  if(name=='docs')return setup('Orders uploaded')
  if(name=='msgs')return setup('Messages')
+ if(name=='routes')return setup('Routes')
  if(name=='clients')return setup(data&&data.id?'Stores':'Clients',data&&data.id)
  if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.filter(p=>p.i==data.id).pop())
  if(name=='setup')return setup('Settings')
@@ -197,7 +198,7 @@ app.showPageServerData=(mode,key)=>{
   data=[app.vm.d.p.data[0][key],title,app.vm.d.p.data[2]+spath]
  }else{
   app.pageServerDataStack=[]
-  data=[app.vm.d.a.data.lst,'root','']
+  data=[app.vm.d.a.data.lst,tr('Current state'),'']
  }
  app.showPage('serverdata',data)
 }

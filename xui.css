@@ -101,6 +101,7 @@ body:not([signed]) .page-header .nav-signed i {width:0}
 #page-login form {display:table;margin:20vh auto}
 
 #page-main .card-panel {margin:10vh auto}
+#page-main .card-panel .row {height:2em}
 #page-main .buttons {text-align:center;padding:5px}
 @media only screen and (min-width: 993px) {#page-main .buttons {text-align:right}}
 
