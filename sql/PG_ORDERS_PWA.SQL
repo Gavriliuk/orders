@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 03.09.24
+-- Last modification date: 30.09.24
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -12,7 +12,7 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 03.09.24
+-- Last modification date: 25.09.24
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'dd.mm.yyyy'; end;
 function time_format return varchar2 is begin return 'dd.mm.yyyy hh24:mi:ss'; end;
@@ -352,17 +352,15 @@ procedure store_markets(p_state in out nocopy web_json.t_fill_state) is
 begin
  web_json.add_subnode_array(p_state,'markets');
  web_json.begin_subnodes(p_state);
- for c in (select cod1,denumirea
-   from tms_syss
-   where tip='S' and cod=27 and cod1>0
-     and cod1 in (select tipclient from vms_order_clients
-       where cod in (select dep from xsld where id='p'))
-   order by cod1)
+ for c in (select distinct tipclient,clc_tipclient_t
+   from vms_order_clients
+   where cod in (select dep from xsld where id='p')
+   order by tipclient)
  loop
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
-   web_json.add_subnode_number(p_state,'i',c.cod1);
-   web_json.add_subnode_string(p_state,'n',nvl(c.denumirea,'^market '||c.cod1));
+   web_json.add_subnode_number(p_state,'i',c.tipclient);
+   web_json.add_subnode_string(p_state,'n',nvl(c.clc_tipclient_t,'^market '||c.tipclient));
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -373,16 +371,15 @@ procedure store_cities(p_state in out nocopy web_json.t_fill_state) is
 begin
  web_json.add_subnode_array(p_state,'cities');
  web_json.begin_subnodes(p_state);
- for c in (select cod1,denumirea
-   from tms_syss
-   where tip='S' and cod=12 and cod1>0
-   and cod1 in (select distinct oras from vms_order_clients where oras is not null)
-   order by cod1)
+ for c in (select distinct oras,clc_oras_t
+   from vms_order_clients
+   where oras is not null
+   order by oras)
  loop
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
-   web_json.add_subnode_number(p_state,'i',c.cod1);
-   web_json.add_subnode_string(p_state,'n',nvl(c.denumirea,'^city '||c.cod1));
+   web_json.add_subnode_number(p_state,'i',c.oras);
+   web_json.add_subnode_string(p_state,'n',nvl(c.clc_oras_t,'^city '||c.oras));
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -401,89 +398,15 @@ begin
  --
  web_json.add_subnode_array(p_state,'routes');
  web_json.begin_subnodes(p_state);
- for r in (select id_ruta id,clc_ruta_t route
+ for r in (select distinct id_ruta,clc_ruta_t
    from vms_order_route_agents
    where id_agent=v_agent_id and main_agent='P'
-   order by id)
+   order by id_ruta)
  loop
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
-   web_json.add_subnode_number(p_state,'i',r.id);
-   web_json.add_subnode_string(p_state,'n',nvl(r.route,'^route '||r.id));
-   --
-   web_json.add_subnode_array(p_state,'p');
-   web_json.begin_subnodes(p_state);
-   for p in (select a.cod cod_tocki,a.name,a.parent_cod
-    ,(select tipclient_s_27 from vms_univ_org s5 where s5.cod=a.cod and rownum=1) tipclient
-    ,(select mp_persincr_univ from vms_univ_org s5 where s5.cod=a.cod and rownum=1) univ
-    ,(select oras from vms_univ_org s5 where s5.cod=a.cod and rownum=1) oras
-    ,(select adress from vms_univ_org s5 where s5.cod=a.cod and rownum=1) jur_adress
-    ,(select addr_fact from vms_univ_org s5 where s5.cod=a.cod and rownum=1) fact_adress
-    ,(select telefon from vms_univ_org s5 where s5.cod=a.cod and rownum=1) telefon
-    ,null tel_pers_contact
-    ,(select telprim from vms_univ_org s5 where s5.cod=a.cod and rownum=1) telprim
-    ,(select cvalacc3 from vms_univ_org s5 where s5.cod=a.cod and rownum=1) priznak1
-    ,(select max(codprice||'/'||codgrp) from tcn0m_contracts,tmdb_docs v
-      where clientid=nvl(a.parent_cod ,a.cod) and sysdate between datastart and dataend and contractid=v.cod and v.nrset=v_nrset
-     )pricelist_id
-    --,null pricelistce_id
-    ,(select max(avanspp) from tcn0m_contracts, vmdb_docs v
-      where clientid=a.parent_cod and sysdate between datastart and dataend and contractid=v.cod and sysfid = 48355) discount
-    ,(select max(ZILE_SCHEMA_DEPLATA) from tcn0m_contracts,vmdb_docs v
-       where clientid=a.parent_cod  and sysdate between datastart and dataend and contractid=v.cod and sysfid = 48355) zile
-    ,nvl((select distinct round(TOTAL_DAT*100) from yrb_debtitori where id_punct = a.cod and user_id = v_user_id  ),0) TOTAL_DAT
-    ,nvl((select distinct round(TOT_PLATA*100) from yrb_debtitori where id_punct = a.cod and user_id = v_user_id),0) TOT_PLATA
-    ,nvl((select distinct round(TOTAL*100) from yrb_debtitori where id_punct =a.cod and user_id = v_user_id),0) TOTAL
-    ,nvl((select distinct round(suma7*100)  from yrb_debtitori where id_punct = a.cod and user_id = v_user_id),0) suma7
-    ,nvl((select distinct round(suma14*100)  from yrb_debtitori where id_punct = a.cod and user_id = v_user_id ),0) suma14
-    ,nvl((select distinct round(suma21*100)  from yrb_debtitori where id_punct = a.cod and user_id = v_user_id),0) suma21
-    ,nvl((select distinct round(suma28*100)  from yrb_debtitori where id_punct = a.cod and user_id = v_user_id),0) suma28
-    ,nvl((select distinct round(suma35*100) from yrb_debtitori where id_punct = a.cod and user_id = v_user_id),0) suma35
-    from (
-     select * from (
-      select cod,client name,parent_cod,null jur_adress,0 tot_exp,null fact_adress,null priznak1,'Activ' status,id_ruta
-      from VMS_ORDER_CLIENTS_GR
-      where parent_cod is not null
-      union all
-      select cod,client name,parent_cod,null jur_adress,0 tot_exp,null fact_adress,null priznak1,'Activ' status,id_ruta
-      from VMS_ORDER_CLIENTS_GR
-      where parent_cod is null
-     )
-     where id_ruta=r.id
-    ) a
-   )
-   loop
-    web_json.add_subnode_object(p_state);
-    web_json.begin_subnodes(p_state);
-     --
-     web_json.add_subnode_number(p_state,'i',p.cod_tocki);
-     web_json.add_subnode_string(p_state,'n',nvl(p.name,'^punct '||p.parent_cod));
-     --web_json.add_subnode_number(p_state,'market',/*p.tipclient*/0); -- Kanal sbyta
-     web_json.add_subnode_optional_number(p_state,'sector',p.univ); -- Municipiu
-     web_json.add_subnode_optional_number(p_state,'city',p.oras);
-     web_json.add_subnode_optional_string(p_state,'legal',p.jur_adress);
-     web_json.add_subnode_optional_string(p_state,'actual',p.fact_adress);
-     --web_json.add_subnode_string(p_state,'phone',v_phone);
-     web_json.add_subnode_optional_number(p_state,'extra',p.priznak1); -- abc
-     web_json.add_subnode_optional_string(p_state,'pl',p.pricelist_id);
-     --web_json.add_subnode_optional_string(p_state,'plce',p.pricelistce_id);
-     web_json.add_subnode_optional_number(p_state,'discount',case when p.discount>0 then round(least(p.discount,100)*100) end);
-     web_json.add_subnode_optional_number(p_state,'delay',p.zile); -- Otsrochka
-     web_json.add_subnode_optional_number(p_state,'tot_dat',p.TOTAL_DAT); -- Kredit na nachalo mesaca
-     web_json.add_subnode_optional_number(p_state,'tot_plata',p.TOT_PLATA); -- Obschij dolg na nachalo mesaca
-     --web_json.add_subnode_number(p_state,'total',/*p.total*/(round(v_dat_tot,2)*100)); 
-     web_json.add_subnode_optional_number(p_state,'s1',p.suma7); -- Kredit na tekuschuyu datu
-     web_json.add_subnode_optional_number(p_state,'s2',p.suma14 ); -- Obschij dolg na tekuschuyu datu
-     web_json.add_subnode_optional_number(p_state,'s3',p.suma21 ); -- Prosrocheno na tekuschuyu datu
-     web_json.add_subnode_optional_number(p_state,'s4',p.suma28);
-     web_json.add_subnode_optional_number(p_state,'s5',p.suma35);
-     --web_json.add_subnode_number(p_state,'slecit',0);
-     --web_json.add_subnode_number(p_state,'prn_lecit',0);
-     --
-    web_json.end_subnodes(p_state);
-   end loop;
-   web_json.end_subnodes(p_state);
-   --
+   web_json.add_subnode_number(p_state,'i',r.id_ruta);
+   web_json.add_subnode_string(p_state,'n',nvl(r.clc_ruta_t,'^route '||r.id_ruta));
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -526,6 +449,47 @@ begin
  --
  web_json.end_subnodes(p_state);
  --write_log('datorii_client');
+end;
+--------------------------------------------------------------------------------
+procedure store_puncts(p_state in out nocopy web_json.t_fill_state) is
+ v_company_id int:=un$nrset.get_company_id(sys_context('envun4','param_nrsetdefault'));
+ v_user_id int:=sys_context('envun4','param_userid');
+ v_agent_id int;
+begin
+ select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
+ --
+ web_json.add_subnode_array(p_state,'puncts');
+ web_json.begin_subnodes(p_state);
+ for p in (
+  select m.cod,m.client,m.parent_cod,m.id_ruta,o.addr_fact
+  ,nvl(o.adress,p.adress)address,nvl(o.telefon,p.telefon)telefon
+  ,nvl(o.telprim,p.telprim)telprim,nvl(o.director,p.director)director
+  from vms_order_clients_gr m,vms_org o,vms_org p,vms_order_route_agents a
+  where m.id_ruta=a.id_ruta
+    and m.nrset=a.nrset
+    and o.cod=m.cod
+    and p.cod(+)=m.parent_cod
+    and a.id_agent=v_agent_id
+    and a.nrset=v_company_id
+    and sysdate between a.datas and a.datae
+    and a.main_agent='P'
+  order by m.cod
+ )
+ loop
+  web_json.add_subnode_object(p_state);
+  web_json.begin_subnodes(p_state);
+   web_json.add_subnode_number(p_state,'i',p.cod);
+   web_json.add_subnode_string(p_state,'n',p.client);
+   web_json.add_subnode_number(p_state,'r',p.id_ruta);
+   web_json.add_subnode_optional_number(p_state,'p',p.parent_cod);
+   web_json.add_subnode_optional_string(p_state,'addr_fact',p.addr_fact);
+   web_json.add_subnode_optional_string(p_state,'address',p.address);
+   web_json.add_subnode_optional_string(p_state,'telefon',p.telefon);
+   web_json.add_subnode_optional_string(p_state,'telprim',p.telprim);
+   web_json.add_subnode_optional_string(p_state,'director',p.director);
+  web_json.end_subnodes(p_state);
+ end loop;
+ web_json.end_subnodes(p_state);
 end;
 --------------------------------------------------------------------------------
 procedure store_branches(p_state in out nocopy web_json.t_fill_state) is
@@ -711,6 +675,7 @@ begin
  datorii_client(v_state);
  --punct_vinzare_short(v_state);
  --punct_vinzare(v_state);
+ store_puncts(v_state);
  store_branches(v_state);
  store_products(v_state);
  --new_price_algoritm(v_state);

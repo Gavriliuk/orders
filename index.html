@@ -94,14 +94,32 @@
 
 <div v-if="d.p.name=='clients'" id="page-clients">
 <div class="collection with-header flow-text no-select">
-<div class="collection-header last caption">
- <a :class="d.p.data?'js':null" :onclick="d.p.data?'app.showPage(\'clients\')':null"><i v-if="d.p.data" class="material-icons">arrow_upward</i>{{d.p.data?d.p.data[1]:tr('All clients')}}</a>
+<div class="collection-header last caption right-align">
+ <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
-<div v-for="c in d.a.data.lst.puncts.filter(p=>d.p.data?(p.p==d.p.data[0]):!p.p)" class="collection-item row">
-<a class="js col s12 l6" :onclick="'app.showPage(\'client\',['+c.i+',\''+c.n+'\'])'">{{c.i}}: {{c.n}}</a>
-<a v-if="d.a.data.lst.puncts.filter(p=>p.p==c.i).length" class="js col s12 l6 right-align" :onclick="'app.showPage(\'clients\',['+c.i+',\''+c.n+'\'])'">[{{d.a.data.lst.puncts.filter(p=>p.p==c.i).length}}]</a>
+<div v-for="c in d.a.data.lst.puncts.filter(p=>d.p.data?(p.p==d.p.data.id):!p.p)" class="collection-item row">
+<a class="js col s12 l6" :onclick="'app.showSubPage(\'client\','+c.i+')'">{{c.i}}: {{c.n}}</a>
+<a v-if="d.a.data.lst.puncts.filter(p=>p.p==c.i).length" class="js col s12 l6 right-align" :onclick="'app.showSubPage(\'clients\','+c.i+')'">[{{d.a.data.lst.puncts.filter(p=>p.p==c.i).length}}]</a>
 </div>
-<div v-if="!d.a.data.lst.puncts.filter(p=>d.p.data?p.p==d.p.data[0]:!p.p).length" class="collection-item center">{{tr('No data')}}</div>
+<div v-if="!d.a.data.lst.puncts.filter(p=>d.p.data?(p.p==d.p.data.id):!p.p).length" class="collection-item center">{{tr('No data')}}</div>
+</div>
+</div>
+
+<div v-if="d.p.name=='client'" id="page-client">
+<div class="collection with-header flow-text no-select">
+<div class="collection-header last caption right-align">
+ <!--a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{(d.p.data.back.name=='clients'&&d.p.data.back.id)?d.a.data.lst.puncts.filter(p=>p.i==d.p.data.back.id)[0].n:d.p.data.back.title}}</a-->
+ <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
+</div>
+<div v-if="d.p.data.punct.addr_fact" class="collection-item">{{tr('Actual address')}}: {{d.p.data.punct.addr_fact}}</div>
+<div v-if="d.p.data.punct.address" class="collection-item">{{tr('Formal address')}}: {{d.p.data.punct.address}}</div>
+<div v-if="d.p.data.punct.telefon||d.p.data.punct.telprim" class="collection-item">{{tr('Phone number')}}: {{d.p.data.punct.telefon}} {{d.p.data.punct.telefon&&d.p.data.punct.telprim&&'/'}} {{d.p.data.punct.telprim}}</div>
+<div v-if="d.p.data.punct.director" class="collection-item">{{tr('Director')}}: {{d.p.data.punct.director}}</div>
+<!--div v-for="c in d.a.data.lst.puncts.filter(p=>d.p.data?(p.p==d.p.data.id):!p.p)" class="collection-item row">
+<a class="js col s12 l6" :onclick="'app.showSubPage(\'client\','+c.i+')'">{{c.i}}: {{c.n}}</a>
+<a v-if="d.a.data.lst.puncts.filter(p=>p.p==c.i).length" class="js col s12 l6 right-align" :onclick="'app.showSubPage(\'clients\','+c.i+')'">[{{d.a.data.lst.puncts.filter(p=>p.p==c.i).length}}]</a>
+</div>
+<div v-if="!d.a.data.lst.puncts.filter(p=>d.p.data?p.p==d.p.data[0]:!p.p).length" class="collection-item center">{{tr('No data')}}</div-->
 </div>
 </div>
 
@@ -126,9 +144,9 @@
 <div v-if="d.p.name=='serverdata'" id="page-serverdata">
 <div class="collection with-header flow-text no-select">
 <div class="collection-header last row caption">
- <a class="col l6 s12" :class="d.p.data[2]?'js':null"
-  :onclick="d.p.data[2]?'app.showPageServerData(-1)':null"><i v-if="d.p.data[2]" class="material-icons">arrow_upward</i>{{d.p.data[1]}}</a>
  <div class="col l6 s12">{{d.p.data[2]||'/'}}</div>
+ <a class="col l6 s12 right-align" :class="d.p.data[2]?'js':null"
+  :onclick="d.p.data[2]?'app.showPageServerData(-1)':null"><i v-if="d.p.data[2]" class="material-icons">arrow_upward</i>{{d.p.data[1]}}</a>
 </div>
 <a v-for="(n,i) in Array.isArray(d.p.data[0])?d.p.data[0]:Object.keys(d.p.data[0])" class="collection-item"
  :class="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?'js':null"

@@ -153,22 +153,35 @@ app.logout=async ()=>{
 
 app.showPage=(name,data)=>{
  //app.log('showPage',name,(''+JSON.stringify(data)).substr(0,100))
- const setup=(title,index)=>{
+ const setup=(title,index,key,value)=>{
   app.vm.d.p.name=name
   app.vm.d.p.data=data
   app.vm.d.p.title=tr(title)+(index?' #'+index:'')
+  if(key)app.vm.d.p.data[key]=value
+  if(name=='clients'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.puncts.filter(p=>p.i==index).pop().n
+  if(name=='client')app.vm.d.p.title+=' : '+value.n
  }
  M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
  if(name=='serverdata')return setup('Server Data')
- app.pageServerDataStack=[]
+ if(app.pageServerDataStack.length)app.pageServerDataStack=[]
  if(name=='order')return data?setup('Order',data.id):setup('New order')
  if(name=='orders')return setup('Orders to upload')
  if(name=='docs')return setup('Orders uploaded')
  if(name=='msgs')return setup('Messages')
- if(name=='clients')return setup('Clients')
+ if(name=='clients')return setup(data&&data.id?'Stores':'Clients',data&&data.id)
+ if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.filter(p=>p.i==data.id).pop())
  if(name=='setup')return setup('Settings')
  name='main'
  setup('Current state')
+}
+
+app.showSubPage=(name,id)=>{
+ app.showPage(name,{id:id,back:{name:app.vm.d.p.name,title:app.vm.d.p.title,id:app.vm.d.p.data&&app.vm.d.p.data.id,back:app.vm.d.p.data&&app.vm.d.p.data.back}})
+}
+
+app.showSuperPage=()=>{
+ if(!app.vm.d.p.data||!app.vm.d.p.data.back)app.showPage()
+ app.showPage(app.vm.d.p.data.back.name,{id:app.vm.d.p.data.back.id,back:app.vm.d.p.data.back.back})
 }
 
 app.pageServerDataStack=[]
