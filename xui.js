@@ -158,6 +158,7 @@ app.showPage=(name,data)=>{
   app.vm.d.p.data=data
   app.vm.d.p.title=tr(title)+(index?' #'+index:'')
   if(key)app.vm.d.p.data[key]=value
+  if(name=='route')app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.routes.filter(r=>r.i==index).pop().n
   if(name=='clients'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.puncts.filter(p=>p.i==index).pop().n
   if(name=='client')app.vm.d.p.title+=' : '+value.n
  }
@@ -169,6 +170,7 @@ app.showPage=(name,data)=>{
  if(name=='docs')return setup('Orders uploaded')
  if(name=='msgs')return setup('Messages')
  if(name=='routes')return setup('Routes')
+ if(name=='route')return setup('Route',data.id)
  if(name=='clients')return setup(data&&data.id?'Stores':'Clients',data&&data.id)
  if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.filter(p=>p.i==data.id).pop())
  if(name=='setup')return setup('Settings')

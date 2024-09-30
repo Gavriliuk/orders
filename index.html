@@ -107,6 +107,16 @@
 </div>
 </div>
 
+<div v-if="d.p.name=='route'" id="page-route">
+<div class="collection with-header flow-text no-select">
+<div class="collection-header last caption right-align">
+ <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
+</div>
+<a v-for="c in d.a.data.lst.puncts.filter(p=>p.r==d.p.data.id)" class="js collection-item row" :onclick="'app.showSubPage(\'client\','+c.i+')'">{{c.i}}: {{c.n}}</a>
+<div v-if="!d.a.data.lst.puncts.filter(p=>p.r==d.p.data.id).length" class="collection-item center">{{tr('No data')}}</div>
+</div>
+</div>
+
 <div v-if="d.p.name=='clients'" id="page-clients">
 <div class="collection with-header flow-text no-select">
 <div class="collection-header last caption right-align">
