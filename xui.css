@@ -15,11 +15,11 @@ body {opacity:1;transition:opacity 1s}
 --color-main-fg:var(--color-fg);*/
 --color-navi-bg:var(--color-ctrl);
 --color-navi-fg:var(--color-white);
---color-head-bg:#08c;
+--color-head-bg:#e49444; /*#08c*/
 --color-head-fg:var(--color-white);
 --color-item-bg:var(--color-white);
 --color-item-fg:var(--color-black);
---color-href-fg:#06a;
+--color-href-fg:var(--color-ctrl); /*#06a*/
 /*--color-btn-bg:#06a;
 --color-btn-fg:#fff;
 --color-btn-hover-bg:#0ad;
@@ -34,6 +34,8 @@ body
 
 nav {background-color:inherit}
 /*nav ul a {font-size:inherit}*/
+
+a {color:var(--color-ctrl)}
 
 .caption {color:var(--color-ctrl);font-weight:bold}
 form input[type="submit"] {color:var(--color-navi-fg);cursor:pointer}
@@ -81,6 +83,9 @@ a[role=button]:hover {color:crimson}
 .btn/*, .Xbtn-large, .btn-small, .btn-like*/
 {border-radius:var(--button-radius)}
 
+.collection .collection-item {line-height:initial}
+.collection.with-header .collection-header {overflow:hidden}
+
 body:not([signed]) .signed, body[signed] .unsigned {display:none}
 
 @media only screen and (min-width: 993px) {.container {width:900px}}
@@ -89,6 +94,7 @@ body:not([signed]) .signed, body[signed] .unsigned {display:none}
 .modal .modal-footer {height:4.5em;text-align:center}
 .no-wrap {overflow:hidden;white-space:nowrap}
 
+.page-header nav {overflow:hidden}
 .page-header table tr {border-width:0}
 .page-header table td {padding:0;vertical-align:top}
 

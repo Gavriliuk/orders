@@ -162,11 +162,12 @@ app.showPage=(name,data)=>{
   if(name=='clients'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.puncts.filter(p=>p.i==index).pop().n
   if(name=='client')app.vm.d.p.title+=' : '+value.n
   if(name=='products'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.groups.filter(g=>g.i==index).pop().n
+  if(name=='order'&&data.punct)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.puncts.filter(p=>p.i==data.punct).pop().n
  }
- M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
+ //M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
  if(name=='serverdata')return setup('Server Data')
  if(app.pageServerDataStack.length)app.pageServerDataStack=[]
- if(name=='order')return data?setup('Order',data.id):setup('New order')
+ if(name=='order')return setup(data.id?'Order':'New order',data.id)
  if(name=='orders')return setup('Orders to upload')
  if(name=='docs')return setup('Orders uploaded')
  if(name=='msgs')return setup('Messages')
@@ -255,6 +256,10 @@ app.dbRefresh=x=>{
 }
 
 app.dbExport=x=>{
+}
+
+app.newOrder=id=>{
+ app.showPage('order',{punct:id})
 }
 
 app.editOrder=id=>{
