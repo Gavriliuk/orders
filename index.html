@@ -83,13 +83,15 @@
 </div>
 <div class="row">
  <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('routes')">{{tr('Routes')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.routes.filter(d=>!d.p).length||tr('No data')}}</div>
- <!--div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn pink accent-3" onclick="app.showPage('order')">{{tr('New order')}}</a></div-->
+ <div class="col s12 l4 right-align">{{d.a.data.lst.routes.length||tr('No data')}}</div>
+</div>
+<div class="row">
+ <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('clients')">{{tr('Clients')}}:</a></div>
+ <div class="col s12 l4 right-align">{{d.a.data.lst.puncts.length||tr('No data')}}</div>
 </div>
 <div class="last row">
- <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('clients')">{{tr('Clients')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.puncts.filter(d=>!d.p).length||tr('No data')}}</div>
- <!--div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn pink accent-3" onclick="app.showPage('order')">{{tr('New order')}}</a></div-->
+ <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('products')">{{tr('Products')}}:</a></div>
+ <div class="col s12 l4 right-align">{{d.a.data.lst.products.length||tr('No data')}}</div>
 </div>
 </div>
 </div>
@@ -140,6 +142,21 @@
 <div v-if="d.p.data.punct.address" class="collection-item">{{tr('Formal address')}}: {{d.p.data.punct.address}}</div>
 <div v-if="d.p.data.punct.telefon||d.p.data.punct.telprim" class="collection-item">{{tr('Phone number')}}: {{d.p.data.punct.telefon}} {{d.p.data.punct.telefon&&d.p.data.punct.telprim&&'/'}} {{d.p.data.punct.telprim}}</div>
 <div v-if="d.p.data.punct.director" class="collection-item">{{tr('Director')}}: {{d.p.data.punct.director}}</div>
+</div>
+</div>
+
+<div v-if="d.p.name=='products'" id="page-products">
+<div class="collection with-header flow-text no-select">
+<div class="collection-header last caption right-align">
+ <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
+</div>
+<a v-for="g in d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0))" class="js collection-item wide row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
+<div class="col s8 l10">{{g.i}}: {{g.n}}</div>
+<div class="col s2 l1">[{{d.a.data.lst.groups.filter(s=>s.p==g.i).length}}]</div>
+<div class="col s2 l1 right-align">[{{d.a.data.lst.products.filter(p=>p.gr==g.i).length}}]</div>
+</a>
+<div v-for="p in d.a.data.lst.products.filter(p=>p.gr==d.p.data.id)" class="collection-item">{{p.n}}</div>
+<div v-if="!d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)).length&&!d.a.data.lst.products.filter(p=>p.gr==d.p.data.id).length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 

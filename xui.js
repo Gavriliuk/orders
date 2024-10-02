@@ -161,6 +161,7 @@ app.showPage=(name,data)=>{
   if(name=='route')app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.routes.filter(r=>r.i==index).pop().n
   if(name=='clients'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.puncts.filter(p=>p.i==index).pop().n
   if(name=='client')app.vm.d.p.title+=' : '+value.n
+  if(name=='products'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.groups.filter(g=>g.i==index).pop().n
  }
  M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
  if(name=='serverdata')return setup('Server Data')
@@ -173,6 +174,7 @@ app.showPage=(name,data)=>{
  if(name=='route')return setup('Route',data.id)
  if(name=='clients')return setup(data&&data.id?'Stores':'Clients',data&&data.id)
  if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.filter(p=>p.i==data.id).pop())
+ if(name=='products')return setup('Products',data&&data.id)
  if(name=='setup')return setup('Settings')
  name='main'
  setup('Current state')

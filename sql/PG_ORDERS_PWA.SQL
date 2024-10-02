@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 30.09.24
+-- Last modification date: 02.10.24
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -12,7 +12,7 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 25.09.24
+-- Last modification date: 02.10.24
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'dd.mm.yyyy'; end;
 function time_format return varchar2 is begin return 'dd.mm.yyyy hh24:mi:ss'; end;
@@ -526,88 +526,84 @@ begin
  --write_log('store_branches');
 end;
 --------------------------------------------------------------------------------
-procedure store_products(p_state in out nocopy web_json.t_fill_state) is
- v_tree_marfa_id0 int:=1;--sys_context('envun4','tree_marfa_id0');
- v_mainpricelist_id int:=sys_context('envun4','mainpricelist_id');
- v_mainpricelist_grp int:=sys_context('envun4','mainpricelist_grp');
- --
- procedure products_add(p_gr1 int,p_gr2 int,cnt int,pg2id1 int) is
- begin
-  for g3 in (select id1,coment,group2
-    from tms_sysgrph where id0=1 and id1=pg2id1
-    and group2<>0 and group3=0 and group1=p_gr1
-    order by coment,id1)
-  loop
-   for p in (select distinct  u.cod cod ,u.denumirea ,u.clc_um_baz_t um,0 pretv, 
-     (select PRODP4 from vms_mpt where cod = u.cod) cant
-     from vms_univtree2 t,vms_order_products u,vtpr1d_perprlist pr
-     where /*1=1*/t.id0=v_tree_marfa_id0 and t.g1=p_gr1 and t.id2=g3.id1
-     and u.cod=t.sc 
-     and pr.sc=u.cod  /*and  u.cod in(select  id from test_110)*/ and trunc(sysdate) between pr.datastart and pr.dataend and cnt =0   
-     order by denumirea,cod)
-   loop
-    web_json.add_subnode_object(p_state);
-    web_json.begin_subnodes(p_state);
-     web_json.add_subnode_number(p_state,'i',trim(p.cod));
-     web_json.add_subnode_string(p_state,'n',trim(nvl(trim(p.denumirea),'^product '||p.cod)));
-     web_json.add_subnode_optional_number(p_state,'p',trim(round(p.pretv*100)));
-     web_json.add_subnode_optional_number(p_state,'c',trim(p.cant*100));
-     web_json.add_subnode_optional_string(p_state,'u',trim(p.um));
-     --
-     web_json.add_subnode_array(p_state,'r');
-     web_json.begin_subnodes(p_state);
-     for pr in (select codprice||'/'||codgrp id,round(pretv*100)price
-       from tpr1d_perprlist
-       where sc=p.cod and trunc(sysdate) between datastart and dataend
-       order by 1)
-     loop
-      web_json.add_subnode_object(p_state);
-      web_json.begin_subnodes(p_state);
-       web_json.add_subnode_string(p_state,'i',trim(pr.id));
-       web_json.add_subnode_string(p_state,'r',trim(pr.price));
-      web_json.end_subnodes(p_state);
-     end loop;
-     web_json.end_subnodes(p_state);
-    web_json.end_subnodes(p_state);
-   end loop;
-  end loop;
- end;
- --
+procedure store_groups(p_state in out nocopy web_json.t_fill_state) is
+ v_tree_marfa_id0 int:=sys_context('envun4','tree_marfa_id0');
 begin
- web_json.add_subnode_array(p_state,'products');
+ web_json.add_subnode_array(p_state,'groups');
  web_json.begin_subnodes(p_state);
  for g1 in (select id1,coment,group1
-   from tms_sysgrph where id0=v_tree_marfa_id0 and group2=0 --and id1=2
-   order by coment,id1)
+  from tms_sysgrph
+  where id0=v_tree_marfa_id0
+    and group2=0
+  order by coment,id1)
  loop
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
    web_json.add_subnode_number(p_state,'i',g1.id1);
    web_json.add_subnode_string(p_state,'n',nvl(g1.coment,'^group1 '||g1.id1));
-   --
-   web_json.add_subnode_array(p_state,'g');
+   web_json.add_subnode_number(p_state,'p',0);
+  web_json.end_subnodes(p_state);
+  --
+  for g2 in (select id1,coment,group2
+   from tms_sysgrph
+   where id0=v_tree_marfa_id0
+     and group1=g1.group1
+     and group2<>0
+     and group3=0
+   order by coment,id1)
+  loop
+   web_json.add_subnode_object(p_state);
    web_json.begin_subnodes(p_state);
-   for g2 in (select decode(id1,0,999,id1) id1_1,id1,coment,group2
-     from tms_sysgrph where id0=v_tree_marfa_id0
-     and group2<>0 and group3=0 and group1=g1.group1
-     order by coment,id1)
+    web_json.add_subnode_number(p_state,'i',g2.id1);
+    web_json.add_subnode_string(p_state,'n',nvl(g2.coment,'^group2 '||g2.id1));
+    web_json.add_subnode_number(p_state,'p',g1.id1);
+   web_json.end_subnodes(p_state);
+   --
+   for g3 in (select id1,coment--,group3
+    from tms_sysgrph
+    where id0=v_tree_marfa_id0
+      and group1=g1.group1
+      and group2=g2.group2
+      and group3<>0
+      and group4=0
+    order by coment,id1)
    loop
     web_json.add_subnode_object(p_state);
     web_json.begin_subnodes(p_state);
-     web_json.add_subnode_number(p_state,'i',g2.id1_1);
-     web_json.add_subnode_string(p_state,'n',nvl(g2.coment,'^group2 '||g2.id1));
-     web_json.add_subnode_array(p_state,'p');
-     web_json.begin_subnodes(p_state);
-      products_add(g1.group1,g2.group2,0,g2.id1);
-     web_json.end_subnodes(p_state);
+     web_json.add_subnode_number(p_state,'i',g3.id1);
+     web_json.add_subnode_string(p_state,'n',nvl(g3.coment,'^group3 '||g3.id1));
+     web_json.add_subnode_number(p_state,'p',g2.id1);
     web_json.end_subnodes(p_state);
    end loop;
-   web_json.end_subnodes(p_state);
-   --
-   web_json.add_subnode_array(p_state,'p');
-   web_json.begin_subnodes(p_state);
-    products_add(g1.group1,0,0,0);
-   web_json.end_subnodes(p_state);
+  end loop;
+ end loop;
+ web_json.end_subnodes(p_state);
+ --write_log('store_groups');
+end;
+--------------------------------------------------------------------------------
+procedure store_products(p_state in out nocopy web_json.t_fill_state) is
+ v_tree_marfa_id0 int:=sys_context('envun4','tree_marfa_id0');
+begin
+ web_json.add_subnode_array(p_state,'products');
+ web_json.begin_subnodes(p_state);
+ for p in (select u.cod,u.denumirea,u.clc_um_baz_t,t.id1--,t.group1,t.group2,t.group3
+  ,(select prodp4 from vms_mpt where cod=t.sc)cant
+  from tms_sysgrp t,vms_order_products u
+  where t.id0=v_tree_marfa_id0
+    and u.cod=t.sc
+    and exists (select null from tpr1d_perprlist where sc=t.sc and trunc(sysdate) between datastart and dataend)
+  order by u.denumirea,u.cod)
+ loop
+  web_json.add_subnode_object(p_state);
+  web_json.begin_subnodes(p_state);
+   web_json.add_subnode_number(p_state,'i',p.cod);
+   web_json.add_subnode_string(p_state,'n',p.denumirea);
+   web_json.add_subnode_string(p_state,'um',p.clc_um_baz_t);
+   web_json.add_subnode_number(p_state,'cant',p.cant);
+   web_json.add_subnode_number(p_state,'gr',p.id1);
+   --web_json.add_subnode_number(p_state,'g1',p.group1);
+   --web_json.add_subnode_number(p_state,'g2',p.group2);
+   --web_json.add_subnode_number(p_state,'g3',p.group3);
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -677,6 +673,7 @@ begin
  --punct_vinzare(v_state);
  store_puncts(v_state);
  store_branches(v_state);
+ store_groups(v_state);
  store_products(v_state);
  --new_price_algoritm(v_state);
  store_remnants(v_state);

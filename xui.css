@@ -70,6 +70,7 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 
 .last.row {margin-bottom:0}
 .row .col {overflow:hidden;text-overflow:ellipsis}
+.wide.row .col {padding:0}
 
 a.js[onclick] {cursor:pointer}
 a.js[onclick]:hover {text-decoration:underline}
