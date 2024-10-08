@@ -89,31 +89,31 @@ app.transform=(text)=>{
 app.encode=text=>app.transform(app.b64encode(text))
 app.decode=text=>app.b64decode(app.transform(text))
 
-app.lskeys=['ts','msg','doc','lst','rep']
+app.lsdef={ts:'',msg:[],doc:[],lst:[],rep:[]}
 
 app.backup=key=>{
- if(!key)return app.lskeys.forEach(key=>app.backup(key))
+ if(!key)return Object.keys(app.lsdef).forEach(key=>app.backup(key))
  const data=JSON.stringify(app.vm.d.a.data[key])
  const encoded=app.encode(data)
  localStorage.setItem('userdata.'+key,encoded)
 }
 
 app.restore=key=>{
- if(!key)return app.lskeys.forEach(key=>app.restore(key))
+ if(!key)return Object.keys(app.lsdef).forEach(key=>app.restore(key))
  const encoded=localStorage.getItem('userdata.'+key)
  if(encoded)try{
   const decoded=app.decode(encoded)
   const data=JSON.parse(decoded)
-  app.vm.d.a.data[key]=data
+  app.vm.d.a.data[key]=data||app.lsdef[key]
   if(key=='msg')app.vm.d.a.not=data.filter(m=>!m.read).length
  }catch(e){
   app.err(e)
-  app.vm.d.a.data[key]=key=='ts'?'':[]
+  app.vm.d.a.data[key]=app.lsdef[key]
  }
 }
 
 app.login=async(username,password)=>{
- app.vm.d.a.data={ts:'',msg:[],doc:[]}
+ app.vm.d.a.data=structuredClone(app.lsdef)
  app.makeKey(app.hash(password+'userdata'+password.length))
  username=username.toLowerCase()
  const userhash=app.hash(username+'/'+password)
@@ -142,7 +142,7 @@ app.login=async(username,password)=>{
 app.logout=async ()=>{
  if(!await app.confirm(tr('Log out')+'?'))return
  document.body.removeAttribute('signed')
- app.vm.d.a.data={ts:'',msg:[],doc:[]}
+ app.vm.d.a.data=structuredClone(app.lsdef)
  app.vm.d.a.signed=false
  app.vm.d.p.data={}
  app.vm.d.p.name=''
@@ -254,7 +254,7 @@ app.dbRefresh=x=>{
  app.query(request,'Refresh database',data=>{
   app.vm.session(data.session)
   app.vm.d.a.data.ts=new Date
-  app.vm.d.a.data.lst=data
+  app.vm.d.a.data.lst=data||[]
   app.vm.d.a.not=data.msg&&data.msg.filter?data.msg.filter(m=>!m.read).length:0
   app.backup()
  })

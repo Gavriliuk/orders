@@ -83,15 +83,15 @@
 </div>
 <div class="row">
  <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('routes')">{{tr('Routes')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.routes.length||tr('No data')}}</div>
+ <div class="col s12 l4 right-align">{{d.a.data.lst.routes&&d.a.data.lst.routes.length||tr('No data')}}</div>
 </div>
 <div class="row">
  <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('clients')">{{tr('Clients')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.puncts.length||tr('No data')}}</div>
+ <div class="col s12 l4 right-align">{{d.a.data.lst.puncts&&d.a.data.lst.puncts.length||tr('No data')}}</div>
 </div>
 <div class="last row">
  <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('products')">{{tr('Products')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.products.length||tr('No data')}}</div>
+ <div class="col s12 l4 right-align">{{d.a.data.lst.products&&d.a.data.lst.products.length||tr('No data')}}</div>
 </div>
 </div>
 </div>
