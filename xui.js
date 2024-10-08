@@ -152,6 +152,7 @@ app.logout=async ()=>{
 }
 
 app.showPage=(name,data)=>{
+ //app.log('showPage',name,data)
  //app.log('showPage',name,(''+JSON.stringify(data)).substr(0,100))
  const setup=(title,index,key,value)=>{
   app.vm.d.p.name=name
@@ -181,8 +182,12 @@ app.showPage=(name,data)=>{
  setup('Current state')
 }
 
-app.showSubPage=(name,id)=>{
- app.showPage(name,{id:id,back:{name:app.vm.d.p.name,title:app.vm.d.p.title,id:app.vm.d.p.data&&app.vm.d.p.data.id,back:app.vm.d.p.data&&app.vm.d.p.data.back}})
+app.showSubPage=(name,id,values)=>{
+ //app.log('showSubPage',name,id,values)
+ //app.log('showSubPage',name,id,(''+JSON.stringify(values)).substr(0,100))
+ const data={id:id,back:{name:app.vm.d.p.name,title:app.vm.d.p.title,id:app.vm.d.p.data&&app.vm.d.p.data.id,back:app.vm.d.p.data&&app.vm.d.p.data.back}}
+ if(values)for(key in values)data[key]=values[key]
+ app.showPage(name,data)
 }
 
 app.showSuperPage=()=>{
@@ -258,12 +263,13 @@ app.dbRefresh=x=>{
 app.dbExport=x=>{
 }
 
-app.newOrder=id=>{
- app.showPage('order',{punct:id})
+app.newOrder=punct=>{
+ if(app.vm.d.p.name=='client')app.showSubPage('order',null,{punct:app.vm.d.p.data.id,products:[]})
 }
 
 app.editOrder=id=>{
- app.showPage('order',{id:id})
+ const doc=app.vm.d.a.doc.filter(d=>d.id==id).pop()
+ if(doc)app.showSubPage('order',id,{punct:doc.punct,products:doc.products})
 }
 
 app.showMsg=id=>{
