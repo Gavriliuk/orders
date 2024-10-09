@@ -85,6 +85,8 @@ a[role=button]:hover {color:crimson}
 
 .collection .collection-item {line-height:initial}
 .collection.with-header .collection-header {overflow:hidden}
+.collection.with-header .collection-item {padding-left:20px}
+
 
 body:not([signed]) .signed, body[signed] .unsigned {display:none}
 

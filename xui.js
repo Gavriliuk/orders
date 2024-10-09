@@ -12,6 +12,10 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
 ,backuped:x=>localStorage.getItem('userdata.ts')
 ,session:s=>s?localStorage.setItem('userdata.session',Math.max(0,Number(s)||0)):Number(localStorage.getItem('userdata.session'))||0
 ,timeout:t=>t?localStorage.setItem('userdata.timeout',Math.max(30,Math.min(600,Number(t)||0))):Number(localStorage.getItem('userdata.timeout'))||300
+,curD:x=>new Date(Math.floor((Date.now()-(new Date).getTimezoneOffset()*60000)/86400000)*86400000)
+,nextD:d=>new Date(d.getTime()+86400000)
+,prevD:d=>new Date(d.getTime()-86400000)
+,txtD:d=>new Date(d).toJSON().slice(0,10)
 ,fmtD:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric'})
 ,fmtdT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
 ,fmtDT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
@@ -263,13 +267,23 @@ app.dbRefresh=x=>{
 app.dbExport=x=>{
 }
 
-app.newOrder=punct=>{
- if(app.vm.d.p.name=='client')app.showSubPage('order',null,{punct:app.vm.d.p.data.id,products:[]})
+app.newOrder=x=>{
+ if(app.vm.d.p.name=='client')app.showSubPage('order',null,{punct:app.vm.d.p.data.id,date:app.vm.txtD(app.vm.nextD(app.vm.curD())),products:[]})
 }
 
 app.editOrder=id=>{
  const doc=app.vm.d.a.doc.filter(d=>d.id==id).pop()
  if(doc)app.showSubPage('order',id,{punct:doc.punct,products:doc.products})
+}
+
+app.orderNextDate=x=>{
+ app.vm.d.p.data.date=app.vm.txtD(app.vm.nextD(app.vm.d.p.data.D))
+ app.vm.$forceUpdate()
+}
+
+app.orderPrevDate=x=>{
+ app.vm.d.p.data.date=app.vm.txtD(app.vm.prevD(app.vm.d.p.data.D))
+ app.vm.$forceUpdate()
 }
 
 app.showMsg=id=>{

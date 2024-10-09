@@ -182,9 +182,17 @@
  <div class="col s12 l6">{{tr('Order type')}}:</div>
  <div class="col s12 l6">&nbsp;</div>
 </div>
-<div class="collection-item wide row">
+<div class="collection-item wide row"
+ :js1="d.p.data.D=new Date(d.p.data.date)"
+ :js2="d.p.data.N=new Date(curD())"
+ :js3="d.p.data.O=Math.floor((d.p.data.D-d.p.data.N)/86400000)">
  <div class="col s12 l6">{{tr('Delivery date')}}:</div>
- <div class="col s12 l6">&nbsp;</div>
+ <div class="col s12 l4 right-align">
+  <a v-if="(d.p.data.O>0)" class="js waves-effect waves-light btn" onclick="app.orderPrevDate()"><i class="material-icons">exposure_neg_1</i></a>
+  <span>&nbsp;{{fmtD(d.p.data.D)}}&nbsp;</span>
+  <a class="js waves-effect waves-light btn" onclick="app.orderNextDate()"><i class="material-icons">exposure_plus_1</i></a>
+ </div>
+ <div class="col s12 l2 right-align">({{d.p.data.O>1?('+'+d.p.data.O+' '+tr('days')):d.p.data.O==1?tr('tomorrow'):tr('today')}})</div>
 </div>
 </div>
 <div v-if="!d.p.data.id" class="center"><a class="js waves-effect waves-light btn" onclick="app.createOrder()">{{tr('Create order')}}</a></div>
