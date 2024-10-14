@@ -18,6 +18,7 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
 ,nextD:d=>new Date(d.getTime()+86400000)
 ,prevD:d=>new Date(d.getTime()-86400000)
 ,txtD:d=>new Date(d).toJSON().slice(0,10)
+,fmtd:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short'})
 ,fmtD:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric'})
 ,fmtdT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
 ,fmtDT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
@@ -291,6 +292,19 @@ app.showOrder=id=>{
  const doc=app.vm.d.a.data.doc.find(d=>d.id==id)
  if(!doc)return app.error('Order '+id+' not found')
  app.showSubPage('order',id,{punct:doc.punct,date:doc.date,type:doc.type,products:structuredClone(doc.p)})
+}
+
+app.editDocType=x=>{
+ if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ const modal=M.Modal.getInstance(document.getElementById('modal-doctypes'))
+ modal.open()
+}
+
+app.setDocType=id=>{
+ if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ M.Modal.getInstance(document.getElementById('modal-doctypes')).close()
+ app.vm.d.p.data.type=id
+ app.vm.$forceUpdate()
 }
 
 app.orderNextDate=x=>{

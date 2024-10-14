@@ -95,6 +95,8 @@ a[role=button]:hover {color:crimson}
 
 .bold {font-weight:bold}
 
+.btn.icon {padding:0 8px}
+
 .collection .collection-item {line-height:initial}
 .collection.with-header .collection-header {overflow:hidden}
 .collection.with-header .collection-header a {text-decoration:underline}

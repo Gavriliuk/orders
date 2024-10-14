@@ -161,7 +161,8 @@
 </div>
 <a v-for="o in d.p.data.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
  <div class="col s3 l2 right-align">#{{o.id}}:&nbsp;</div>
- <div class="col s9 l10">{{o.date}}</div>
+ <div class="col s3 l2">{{fmtd(o.date)}}</div>
+ <div class="col s6 l8">{{o.type&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.type))}}</div>
 </a>
 <div v-if="!d.p.data.OO.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
@@ -201,16 +202,19 @@
 <div class="collection-header caption right-align">
  <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
 </div>
-<div class="collection-item wide row">
- <div class="col s12 l6">{{tr('Order type')}}:</div>
- <div class="col s12 l6">&nbsp;</div>
+<div v-if="oval(d.a.data.lst.doctypes,'length')" class="collection-item wide row">
+ <div class="col s12 l6 caption">{{tr('Order type')}}:</div>
+ <div class="col s12 l6 right-align">
+  <span>{{d.p.data.type&&oval(d.a.data.lst.doctypes.find(t=>t.i==d.p.data.type))}}</span>
+  <a class="js waves-effect waves-light btn icon" onclick="app.editDocType()"><i class="material-icons">dehaze</i></a>
+ </div>
 </div>
 <div class="collection-item wide row">
- <div class="col s12 l6">{{tr('Delivery date')}}:</div>
+ <div class="col s12 l6 caption">{{tr('Delivery date')}}:</div>
  <div class="col s12 l4 right-align">
-  <a v-if="(d.p.data.O>0)" class="js waves-effect waves-light btn" onclick="app.orderPrevDate()"><i class="material-icons">exposure_neg_1</i></a>
+  <a v-if="(d.p.data.O>0)" class="js waves-effect waves-light btn icon" onclick="app.orderPrevDate()"><i class="material-icons">exposure_neg_1</i></a>
   <span>&nbsp;{{fmtD(d.p.data.D)}}&nbsp;</span>
-  <a class="js waves-effect waves-light btn" onclick="app.orderNextDate()"><i class="material-icons">exposure_plus_1</i></a>
+  <a class="js waves-effect waves-light btn icon" onclick="app.orderNextDate()"><i class="material-icons">exposure_plus_1</i></a>
  </div>
  <div class="col s12 l2 right-align">({{d.p.data.O>1?('+'+d.p.data.O+' '+tr('days')):d.p.data.O==1?tr('tomorrow'):tr('today')}})</div>
 </div>
@@ -390,8 +394,7 @@
 </div>
 
 <div id="modal-quantity" class="modal">
- <div class="modal-header flow-text caption">{{oval(d.m.qty.P,'n')}}
- </div>
+ <div class="modal-header flow-text caption">{{oval(d.m.qty.P,'n')}}</div>
  <div class="modal-content flow-text">
   <div class="caption">{{tr('Enter product quantity')}}:</div>
   <div class="last row">
@@ -405,6 +408,19 @@
  </div>
  <div class="modal-footer">
   <a class="js waves-effect waves-light btn modal-close default" onclick="app.setProductQty()">OK</a>
+  <a class="js waves-effect waves-light btn modal-close">{{tr('Cancel')}}</a>
+ </div>
+</div>
+
+<div id="modal-doctypes" class="modal">
+ <div class="modal-header flow-text caption">{{tr('Choose')}} {{tr('Order type')}}</div>
+ <div class="modal-content flow-text">
+  <div class="collection">
+   <a v-for="t in d.a.data.lst.doctypes" class="js collection-item" :class="t.i==oval(d.p.data,'type')?'caption':null" :onclick="'app.setDocType('+t.i+')'">{{t.n}}</a>
+   <div v-if="!oval(d.a.data.lst.doctypes,'length')" class="collection-item">{{tr('No data')}}</div>
+  </div>
+ </div>
+ <div class="modal-footer">
   <a class="js waves-effect waves-light btn modal-close">{{tr('Cancel')}}</a>
  </div>
 </div>
