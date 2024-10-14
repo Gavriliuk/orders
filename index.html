@@ -70,29 +70,29 @@
 <div class="page container signed">
 
 <div v-if="d.p.name=='main'" id="page-main">
-<div class="card-panel hoverable no-wrap flow-text no-select">
-<div class="row">
- <div class="col s12 l4 caption"><a class="js" onclick="app.showPageServerData()">{{tr('Data loaded')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</div>
- <div class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></div>
+<div class="card-panel hoverable collection no-wrap flow-text no-select">
+<div class="collection-item row">
+ <div class="col s6 l6 caption"><a class="js" onclick="app.showPageServerData()">{{tr('Data loaded')}}:</a></div>
+ <div class="col s6 l6 right-align">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</div>
+ <div class="col s12 l12 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></div>
 </div>
-<div class="row">
- <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('orders')">{{tr('Orders to upload')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.doc.filter(d=>!d.nrdoc).length||tr('No data')}}</div>
- <div v-if="d.a.data.doc.filter(d=>!d.nrdoc).length" class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbExport()">{{tr('Upload')}}</a></div>
-</div>
-<div class="row">
- <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('routes')">{{tr('Routes')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.routes&&d.a.data.lst.routes.length||tr('No data')}}</div>
-</div>
-<div class="row">
- <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('clients')">{{tr('Clients')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.puncts&&d.a.data.lst.puncts.length||tr('No data')}}</div>
-</div>
-<div class="last row">
- <div class="col s12 l4 caption"><a class="js" onclick="app.showSubPage('products')">{{tr('Products')}}:</a></div>
- <div class="col s12 l4 right-align">{{d.a.data.lst.products&&d.a.data.lst.products.length||tr('No data')}}</div>
-</div>
+<a class="js collection-item row" onclick="app.showSubPage('orders')">
+ <div class="col s8 l6 bold">{{tr('Orders to upload')}}:</div>
+ <div class="col s4 l6 right-align">{{d.a.data.doc.filter(d=>!d.nrdoc).length||tr('No data')}}</div>
+ <!--div v-if="d.a.data.doc.filter(d=>!d.nrdoc).length" class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbExport()">{{tr('Upload')}}</a></div-->
+</a>
+<a class="js collection-item row" onclick="app.showSubPage('routes')">
+ <div class="col s6 l6 bold">{{tr('Routes')}}:</div>
+ <div class="col s6 l6 right-align">{{d.a.data.lst.routes&&d.a.data.lst.routes.length||tr('No data')}}</div>
+</a>
+<a class="js collection-item row" onclick="app.showSubPage('clients')">
+ <div class="col s6 l6 bold">{{tr('Clients')}}:</div>
+ <div class="col s6 l6 right-align">{{d.a.data.lst.puncts&&d.a.data.lst.puncts.length||tr('No data')}}</div>
+</a>
+<a class="js collection-item last row" onclick="app.showSubPage('products')">
+ <div class="col s6 l6 bold">{{tr('Products')}}:</div>
+ <div class="col s6 l6 right-align">{{d.a.data.lst.products&&d.a.data.lst.products.length||tr('No data')}}</div>
+</a>
 </div>
 </div>
 
@@ -108,8 +108,9 @@
 
 <div v-if="d.p.name=='route'" id="page-route">
 <div class="collection with-header flow-text no-select">
-<div class="collection-header caption right-align">
- <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
+<div class="collection-header caption">
+ <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
+ <span class="left">{{oval(d.a.data.lst.routes.find(p=>p.i==d.p.data.id))}}</span>
 </div>
 <a v-for="c in d.a.data.lst.puncts.filter(p=>p.r==d.p.data.id)" class="js collection-item row" :onclick="'app.showSubPage(\'client\','+c.i+')'">{{c.i}}: {{c.n}}</a>
 <div v-if="!d.a.data.lst.puncts.filter(p=>p.r==d.p.data.id).length" class="collection-item center">{{tr('No data')}}</div>
@@ -118,8 +119,9 @@
 
 <div v-if="d.p.name=='clients'" id="page-clients">
 <div class="collection with-header flow-text no-select">
-<div class="collection-header caption right-align">
- <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
+<div class="collection-header caption">
+ <a :class="d.p.data&&d.p.data.back?'js right':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
+ <span v-if="d.p.data.id" class="left">{{oval(d.a.data.lst.puncts.find(p=>p.i==d.p.data.id))}}</span>
 </div>
 <div v-for="c in d.a.data.lst.puncts.filter(p=>d.p.data?(p.p==d.p.data.id):!p.p)" class="collection-item row">
 <a class="js col s12 l6" :onclick="'app.showSubPage(\'client\','+c.i+')'">{{c.i}}: {{c.n}}</a>
@@ -130,21 +132,38 @@
 </div>
 
 <div v-if="d.p.name=='client'" id="page-client">
-<div class="collection with-header flow-text no-select">
-<div class="collection-header caption right-align">
- <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
+<div class="collection with-header flow-text no-select"
+ :js1="d.p.data.OO=d.a.data.doc.filter(o=>o.punct==d.p.data.id)">
+<div class="collection-header caption">
+ <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
+ <span class="left">{{d.p.data.punct.n}}</span>
 </div>
-<div v-if="d.p.data.punct.addr_fact" class="collection-item">{{tr('Actual address')}}: {{d.p.data.punct.addr_fact}}</div>
-<div v-if="d.p.data.punct.address" class="collection-item">{{tr('Formal address')}}: {{d.p.data.punct.address}}</div>
-<div v-if="d.p.data.punct.telefon||d.p.data.punct.telprim" class="collection-item">{{tr('Phone number')}}: {{d.p.data.punct.telefon}} {{d.p.data.punct.telefon&&d.p.data.punct.telprim&&'/'}} {{d.p.data.punct.telprim}}</div>
-<div v-if="d.p.data.punct.director" class="collection-item">{{tr('Director')}}: {{d.p.data.punct.director}}</div>
+<div v-if="d.p.data.punct.addr_fact" class="collection-item wide row">
+ <div class="col s12 l6 caption">{{tr('Actual address')}}:</div>
+ <div class="col s12 l6">{{d.p.data.punct.addr_fact}}</div>
+</div>
+<div v-if="d.p.data.punct.address" class="collection-item wide row">
+ <div class="col s12 l6 caption">{{tr('Formal address')}}:</div>
+ <div class="col s12 l6">{{d.p.data.punct.address}}</div>
+</div>
+<div v-if="d.p.data.punct.telefon||d.p.data.punct.telprim" class="collection-item wide row">
+ <div class="col s12 l6 caption">{{tr('Phone number')}}:</div>
+ <div class="col s12 l6">{{d.p.data.punct.telefon}} {{d.p.data.punct.telefon&&d.p.data.punct.telprim&&'/'}} {{d.p.data.punct.telprim}}</div>
+</div>
+<div v-if="d.p.data.punct.director" class="collection-item wide row">
+ <div class="col s12 l6 caption">{{tr('Director')}}:</div>
+ <div class="col s12 l6">{{d.p.data.punct.director}}</div>
+</div>
 </div>
 <div class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Orders')}}
  <a class="js waves-effect waves-light btn right" onclick="app.newOrder()"><i class="material-icons">add</i></a>
 </div>
-<a v-for="d in d.a.data.doc.filter(d=>d.punct==d.p.data.id)" class="js collection-item" :onclick="'app.showOrder('+d.id+')'">#{{d.id}}</a>
-<div v-if="!d.a.data.doc.filter(d=>d.punct==d.p.data.id).length" class="collection-item center">{{tr('No data')}}</div>
+<a v-for="o in d.p.data.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
+ <div class="col s3 l2 right-align">#{{o.id}}:&nbsp;</div>
+ <div class="col s9 l10">{{o.date}}</div>
+</a>
+<div v-if="!d.p.data.OO.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
@@ -160,7 +179,7 @@
 </a>
 <div v-for="p in d.a.data.lst.products.filter(p=>p.gr==d.p.data.id)" class="collection-item wide row">
 <div class="col s8 l10">{{p.i}}: {{p.n}}</div>
-<div class="col s2 l1 right-align">{{p.cant}}</div>
+<div class="col s2 l1 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
 <div class="col s2 l1">&nbsp;({{p.um}})</div>
 </div>
 <div v-if="!d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)).length&&!d.a.data.lst.products.filter(p=>p.gr==d.p.data.id).length" class="collection-item center">{{tr('No data')}}</div>
@@ -174,7 +193,11 @@
 </div>
 
 <div v-if="d.p.name=='order'" id="page-order">
-<div class="collection with-header flow-text no-select">
+<div class="collection with-header flow-text no-select"
+ :js1="d.p.data.D=new Date(d.p.data.date)"
+ :js2="d.p.data.N=new Date(curD())"
+ :js3="d.p.data.O=Math.floor((d.p.data.D-d.p.data.N)/86400000)"
+ :js4="d.p.data.P=docpp()">
 <div class="collection-header caption right-align">
  <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
 </div>
@@ -182,10 +205,7 @@
  <div class="col s12 l6">{{tr('Order type')}}:</div>
  <div class="col s12 l6">&nbsp;</div>
 </div>
-<div class="collection-item wide row"
- :js1="d.p.data.D=new Date(d.p.data.date)"
- :js2="d.p.data.N=new Date(curD())"
- :js3="d.p.data.O=Math.floor((d.p.data.D-d.p.data.N)/86400000)">
+<div class="collection-item wide row">
  <div class="col s12 l6">{{tr('Delivery date')}}:</div>
  <div class="col s12 l4 right-align">
   <a v-if="(d.p.data.O>0)" class="js waves-effect waves-light btn" onclick="app.orderPrevDate()"><i class="material-icons">exposure_neg_1</i></a>
@@ -195,17 +215,25 @@
  <div class="col s12 l2 right-align">({{d.p.data.O>1?('+'+d.p.data.O+' '+tr('days')):d.p.data.O==1?tr('tomorrow'):tr('today')}})</div>
 </div>
 </div>
-<div v-if="!d.p.data.id" class="center"><a class="js waves-effect waves-light btn" onclick="app.createOrder()">{{tr('Create order')}}</a></div>
+<div class="center">
+ <a v-if="!d.p.data.id" class="js waves-effect waves-light btn" onclick="app.createOrder()">{{tr('Create order')}}</a>
+ <a v-if="!d.p.data.id" class="js waves-effect waves-light btn" onclick="app.createOrder(1)">{{tr('Create and close')}}</a>
+ <a v-if="d.p.data.id" class="js waves-effect waves-light btn" onclick="app.saveOrder()">{{tr('Save order')}}</a>
+ <a v-if="d.p.data.id" class="js waves-effect waves-light btn" onclick="app.saveOrder(1)">{{tr('Save and close')}}</a>
+</div>
 <div class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Products')}}
- <a class="js waves-effect waves-light btn right" onclick="app.addProduct()"><i class="material-icons">add</i></a>
+ <a class="js waves-effect waves-light btn right" onclick="app.addProducts()"><i class="material-icons">add</i></a>
 </div>
-<div v-for="p in d.p.data.products" class="collection-item wide row">
-<div class="col s8 l10">{{p.i}}: {{p.n}}</div>
-<div class="col s2 l1 right-align">{{p.cant}}</div>
-<div class="col s2 l1">&nbsp;({{p.um}})</div>
-</div>
-<div v-if="!d.p.data.products.length" class="collection-item center">{{tr('No data')}}</div>
+<a v-for="p in d.p.data.P" :class="p.g?'collection-group center':'js collection-item wide row'"
+  :onclick="p.g?null:'app.editProductQty('+p.i+')'">
+ <div v-if="p.g" class="collection-group center">[{{p.i}}: {{p.n}}]</div>
+ <div v-if="!p.g" class="col s12 l9">{{p.i}}: {{p.n}}</div>
+ <div v-if="!p.g" class="col s4 l1 right-align bold accent-fg">{{p.q}}</div>
+ <div v-if="!p.g" class="col s4 l1 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
+ <div v-if="!p.g" class="col s4 l1">&nbsp;({{p.um}})</div>
+</a>
+<div v-if="!d.p.data.P.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
@@ -226,7 +254,7 @@
 <div class="collection-header last row caption">
  <div class="col l6 s12">{{d.p.data[2]||'/'}}</div>
  <a class="js col l6 s12 right-align"
-  :onclick="d.p.data[2]?'app.showPageServerData(-1)':'app.showPage()'"><i class="material-icons">arrow_upward</i>{{d.p.data[1]}}</a>
+  :onclick="d.p.data[2]?'app.showPageServerData(-1)':'app.showPage()'"><i class="material-icons">arrow_upward</i>{{d.p.data[3]}}</a>
 </div>
 <a v-for="(n,i) in Array.isArray(d.p.data[0])?d.p.data[0]:Object.keys(d.p.data[0])" class="collection-item"
  :class="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?'js':null"
@@ -305,8 +333,9 @@
 </div>
 
 <div id="modal-chgpwd" class="modal">
+ <div class="modal-header flow-text caption">{{tr('Change password')}}</div>
  <div class="modal-content flow-text">
-  <div class="caption center">{{tr('Enter a new password')}}</div>
+  <div class="caption">{{tr('Enter a new password')}}:</div>
   <div class="input-field"><input id="change-password-1" type="password"/><label for="change-password-1">{{tr('Password')}}:</label></div>
   <div class="input-field"><input id="change-password-2" type="password"/><label for="change-password-2">{{tr('Password')}}:</label></div>
  </div>
@@ -316,14 +345,67 @@
 </div>
 
 <div id="modal-query" class="modal">
+ <div class="modal-header flow-text caption">{{d.m.query.caption}}</div>
  <div class="modal-content flow-text">
-  <div class="caption center">{{d.m.query.caption}}</div>
   <div>{{d.m.query.status}}</div>
   <div class="right-align">{{tr('Waiting time')}}: {{d.m.query.time}} {{tr('sec.')}}</div>
  </div>
  <div class="modal-footer">
   <a v-if="d.m.query.ok" class="js waves-effect waves-light btn modal-close">OK</a>
   <a v-else class="js waves-effect waves-light btn modal-close">{{tr('Cancel')}}</a>
+ </div>
+</div>
+
+<div id="modal-products" class="modal" style="max-height:90%">
+ <div class="modal-header flow-text caption last row"
+   :js1="d.m.products.G=d.m.products.g&&d.a.data.lst.groups.find(g=>g.i==d.m.products.g)"
+   :js2="d.m.products.p=d.m.products.G&&d.m.products.G.p"
+   :js3="d.m.products.P=d.m.products.p&&d.a.data.lst.groups.find(g=>g.i==d.m.products.p)"
+   :js4="d.m.products.GG=d.a.data.lst.groups?d.a.data.lst.groups.filter(g=>g.p==(d.m.products.g||0)):[]"
+   :js5="d.m.products.PP=d.a.data.lst.products?d.a.data.lst.products.filter(p=>p.gr==(d.m.products.g||0)):[]">
+  <span class="col s12 l6 left-align">{{oval(d.m.products.G,'n','All products',1)}}</span>
+  <a v-if="d.m.products.g" class="js col s12 l6 right-align" :onclick="'app.vm.d.m.products.g=app.vm.d.m.products.p'">
+   <i class="material-icons">arrow_upward</i>{{oval(d.m.products.P,'n','All products',1)}}
+  </a>
+ </div>
+ <div class="modal-content flow-text">
+  <div class="collection flow-text no-select" style="margin:0">
+   <a v-for="g in d.m.products.GG" class="js collection-item wide row"
+    :onclick="'app.vm.d.m.products.g='+g.i">
+    <div class="col s8 l10">[{{g.i}}: {{g.n}}]</div>
+    <div class="col s4 l2 right-align">[{{d.a.data.lst.groups.filter(s=>s.p==g.i).length}}/{{d.a.data.lst.products.filter(p=>p.gr==g.i).length}}]</div>
+   </a>
+   <a v-for="p in d.m.products.PP" class="js collection-item wide row"
+    :onclick="'app.editProductQty('+p.i+')'">
+    <div class="col s12 l8">{{p.i}}: {{p.n}}</div>
+    <div class="col s6 l2 right-align">{{p.cant}}</div>
+    <div class="col s6 l2">&nbsp;({{p.um}})</div>
+   </a>
+   <div v-if="!d.m.products.GG.length&&!d.m.products.PP.length" class="collection-item center">{{tr('No data')}}</div>
+  </div>
+ </div>
+ <div class="modal-footer">
+  <a class="js waves-effect waves-light btn modal-close">{{tr('Close')}}</a>
+ </div>
+</div>
+
+<div id="modal-quantity" class="modal">
+ <div class="modal-header flow-text caption">{{oval(d.m.qty.P,'n')}}
+ </div>
+ <div class="modal-content flow-text">
+  <div class="caption">{{tr('Enter product quantity')}}:</div>
+  <div class="last row">
+   <div class="input-field col s12 l6" style="margin:0">
+    <input id="input-quantity" type="number" class="bold accent-fg right-align" style="margin:0;font-size:inherit" :value="d.m.qty.cant"/>
+    <label for="input-quantity">{{tr('Quantity')}}:</label>
+   </div>
+   <div class="col s6 l3" style="line-height:3rem">{{d.m.qty.P&&d.m.qty.P.cant?('x '+d.m.qty.P.cant):'&nbsp;'}}</div>
+   <div class="col s6 l3 right-align" style="line-height:3rem">{{d.m.qty.P&&d.m.qty.P.um?('('+d.m.qty.P.um+')'):'&nbsp;'}}</div>
+  </div>
+ </div>
+ <div class="modal-footer">
+  <a class="js waves-effect waves-light btn modal-close default" onclick="app.setProductQty()">OK</a>
+  <a class="js waves-effect waves-light btn modal-close">{{tr('Cancel')}}</a>
  </div>
 </div>
 

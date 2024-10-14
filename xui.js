@@ -1,9 +1,9 @@
 const app={}
 
-app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',signed:0,not:0
-  ,data:{ts:'',msg:[],doc:[],lst:[],rep:[]}}
+app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',signed:0,not:0,data:{ts:'',msg:[],doc:[],lst:[],rep:[]}}
  ,p:{name:'',title:'',data:{}}
- ,m:{msgbox:{caption:'',text:'',ok:false},chgpwd:{ok:false},query:{caption:'',status:'',time:0,ok:false}}}}
+ ,m:{msgbox:{caption:'',text:'',ok:false},chgpwd:{ok:false},query:{caption:'',status:'',time:0,ok:false},products:{g:0},qty:{P:null,cant:0}}
+}}
 ,computed:{app:x=>app,langs:x=>tr.prototype.list}
 ,methods:{
  tr:d=>tr(''+d)
@@ -12,6 +12,8 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
 ,backuped:x=>localStorage.getItem('userdata.ts')
 ,session:s=>s?localStorage.setItem('userdata.session',Math.max(0,Number(s)||0)):Number(localStorage.getItem('userdata.session'))||0
 ,timeout:t=>t?localStorage.setItem('userdata.timeout',Math.max(30,Math.min(600,Number(t)||0))):Number(localStorage.getItem('userdata.timeout'))||300
+,oval:(obj,key,def,t)=>obj?obj[key||'n']:t?tr(def):def
+,ovalnd:(obj,key)=>obj?obj[key||'n']:tr('No data')
 ,curD:x=>new Date(Math.floor((Date.now()-(new Date).getTimezoneOffset()*60000)/86400000)*86400000)
 ,nextD:d=>new Date(d.getTime()+86400000)
 ,prevD:d=>new Date(d.getTime()-86400000)
@@ -19,6 +21,19 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
 ,fmtD:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric'})
 ,fmtdT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
 ,fmtDT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
+,docpg:x=>app.vm.d.a.data.lst.groups.filter(g=>!g.p).map(g=>({i:g.i,n:g.n
+ ,p:app.vm.d.a.data.lst.products.filter(p=>p.gr==g.i).map(p=>({i:p.i,n:p.n,cant:p.cant,um:p.um
+  ,dp:app.vm.d.p.data.products.find(dp=>dp.i==p.i)})).filter(p=>p.dp&&p.dp.q>0).map(p=>({i:p.i,n:p.n,cant:p.cant,um:p.um,q:p.dp.q}))
+ })).filter(g=>g.p.length)
+,docpp:d=>{
+  const pg=app.vm.docpg()
+  const result=[]
+  pg.forEach(g=>{
+   result.push({i:g.i,n:g.n,g:1})
+   g.p.forEach(p=>result.push(p))
+  })
+  return result
+ }
 }})
 
 app.ts=()=>(new Date()).toTimeString().substr(0,8)
@@ -163,11 +178,11 @@ app.showPage=(name,data)=>{
   app.vm.d.p.data=data
   app.vm.d.p.title=tr(title)+(index?' #'+index:'')
   if(key)app.vm.d.p.data[key]=value
-  if(name=='route')app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.routes.filter(r=>r.i==index).pop().n
-  if(name=='clients'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.puncts.filter(p=>p.i==index).pop().n
+  if(name=='route')app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.routes.find(r=>r.i==index))
+  if(name=='clients'&&index)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.puncts.find(p=>p.i==index))
   if(name=='client')app.vm.d.p.title+=' : '+value.n
-  if(name=='products'&&index)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.groups.filter(g=>g.i==index).pop().n
-  if(name=='order'&&data.punct)app.vm.d.p.title+=' : '+app.vm.d.a.data.lst.puncts.filter(p=>p.i==data.punct).pop().n
+  if(name=='products'&&index)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.groups.find(g=>g.i==index))
+  if(name=='order'&&data.punct)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.puncts.find(p=>p.i==data.punct))
  }
  //M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
  if(name=='serverdata')return setup('Server Data')
@@ -179,7 +194,7 @@ app.showPage=(name,data)=>{
  if(name=='routes')return setup('Routes')
  if(name=='route')return setup('Route',data.id)
  if(name=='clients')return setup(data&&data.id?'Stores':'Clients',data&&data.id)
- if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.filter(p=>p.i==data.id).pop())
+ if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.find(p=>p.i==data.id))
  if(name=='products')return setup('Products',data&&data.id)
  if(name=='setup')return setup('Settings')
  name='main'
@@ -209,10 +224,10 @@ app.showPageServerData=(mode,key)=>{
   app.pageServerDataStack.push(app.vm.d.p.data)
   const title=Array.isArray(app.vm.d.p.data[0])?(app.vm.d.p.data[0][key].n||(app.vm.d.p.data[2]+'['+key+']')):key
   const spath=Array.isArray(app.vm.d.p.data[0])?('['+key+']'):('/'+key)
-  data=[app.vm.d.p.data[0][key],title,app.vm.d.p.data[2]+spath]
+  data=[app.vm.d.p.data[0][key],title,app.vm.d.p.data[2]+spath,app.vm.d.p.data[1]]
  }else{
   app.pageServerDataStack=[]
-  data=[app.vm.d.a.data.lst,tr('Current state'),'']
+  data=[app.vm.d.a.data.lst,'root','',tr('Current state')]
  }
  app.showPage('serverdata',data)
 }
@@ -268,12 +283,14 @@ app.dbExport=x=>{
 }
 
 app.newOrder=x=>{
- if(app.vm.d.p.name=='client')app.showSubPage('order',null,{punct:app.vm.d.p.data.id,date:app.vm.txtD(app.vm.nextD(app.vm.curD())),products:[]})
+ if(app.vm.d.p.name!='client')return app.error('Wrong page: '+app.vm.d.p.name)
+ app.showSubPage('order',null,{punct:app.vm.d.p.data.id,date:app.vm.txtD(app.vm.nextD(app.vm.curD())),products:[]})
 }
 
-app.editOrder=id=>{
- const doc=app.vm.d.a.doc.filter(d=>d.id==id).pop()
- if(doc)app.showSubPage('order',id,{punct:doc.punct,products:doc.products})
+app.showOrder=id=>{
+ const doc=app.vm.d.a.data.doc.find(d=>d.id==id)
+ if(!doc)return app.error('Order '+id+' not found')
+ app.showSubPage('order',id,{punct:doc.punct,date:doc.date,type:doc.type,products:structuredClone(doc.p)})
 }
 
 app.orderNextDate=x=>{
@@ -284,6 +301,60 @@ app.orderNextDate=x=>{
 app.orderPrevDate=x=>{
  app.vm.d.p.data.date=app.vm.txtD(app.vm.prevD(app.vm.d.p.data.D))
  app.vm.$forceUpdate()
+}
+
+app.addProducts=x=>{
+ const modal=M.Modal.getInstance(document.getElementById('modal-products'))
+ modal.open()
+}
+
+app.editProductQty=id=>{
+ if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(!app.vm.d.a.data.lst.products)return app.error('No products')
+ app.vm.d.m.qty.P=app.vm.d.a.data.lst.products.find(p=>p.i==id)
+ if(!app.vm.d.m.qty.P)return app.error('Product '+id+' not found')
+ app.vm.d.m.qty.cant=0
+ app.vm.d.p.data.products.filter(p=>p.i==id).forEach(p=>app.vm.d.m.qty.cant+=p.q)
+ const modal=M.Modal.getInstance(document.getElementById('modal-quantity'))
+ modal.open()
+}
+
+app.setProductQty=x=>{
+ const P=app.vm.d.m.qty.P
+ if(!P)return app.error('Product not specified')
+ const cant=parseInt(document.getElementById('input-quantity').value)
+ const p=app.vm.d.p.data.products.find(p=>p.i==P.i)
+ if(!p&&cant>0)app.vm.d.p.data.products.push({i:P.i,q:cant})
+ else if(p&&cant>0)p.q=cant
+ else if(p)app.vm.d.p.data.products.splice(app.vm.d.p.data.products.findIndex(x=>x==p),1)
+}
+
+app.createOrder=close=>{
+ if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ const punct=app.vm.d.p.data.punct
+ const date=app.vm.d.p.data.date
+ const type=app.vm.d.p.data.type
+ let id=1
+ app.vm.d.a.data.doc.forEach(d=>{if(d.id>=id)id=d.id+1})
+ const doc={id:id,punct:punct,date:date}
+ if(type)doc.type=type
+ doc.p=structuredClone(app.vm.d.p.data.products)
+ app.vm.d.a.data.doc.push(doc)
+ app.backup('doc')
+ if(close)return app.showSuperPage()
+ app.vm.d.p.data.id=id
+ app.vm.d.p.title=tr('Order')+' #'+id
+}
+
+app.saveOrder=close=>{
+ if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ const doc=app.vm.d.a.data.doc.find(o=>o.id==app.vm.d.p.data.id)
+ if(!doc)return app.error('Order '+app.vm.d.p.data.id+' not found')
+ if(doc.date!=app.vm.d.p.data.date)doc.date=app.vm.d.p.data.date
+ if(doc.type!=app.vm.d.p.data.type)doc.type=app.vm.d.p.data.type
+ doc.p=structuredClone(app.vm.d.p.data.products)
+ app.backup('doc')
+ if(close)app.showSuperPage()
 }
 
 app.showMsg=id=>{

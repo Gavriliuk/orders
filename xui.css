@@ -6,7 +6,9 @@ body {opacity:1;transition:opacity 1s}
 --color-white:#fff;--color-black:#000;--color-dark-grey:#888;
 --color-blue:#08f;--color-light-blue:#2af;
 --color-red:#e44;--color-light-red:#f66;
---color-bg:#ffe;--color-fg:#004;--color-ctrl:#26a69a;
+--color-bg:#ffe;--color-fg:#004;
+--color-head:#e49444;--color-ctrl:#26a69a;
+--color-accent:#a00;
 }
 
 /* implicit colors */
@@ -15,7 +17,7 @@ body {opacity:1;transition:opacity 1s}
 --color-main-fg:var(--color-fg);*/
 --color-navi-bg:var(--color-ctrl);
 --color-navi-fg:var(--color-white);
---color-head-bg:#e49444; /*#08c*/
+--color-head-bg:var(--color-head);
 --color-head-fg:var(--color-white);
 --color-item-bg:var(--color-white);
 --color-item-fg:var(--color-black);
@@ -29,7 +31,10 @@ body {opacity:1;transition:opacity 1s}
 body
 {background-color:var(--color-bg);color:var(--color-fg)}
 
-#app>header,#app>footer
+.accent-fg {color:var(--color-accent)}
+.accent-bg {background-color:var(--color-accent)}
+
+#app>header,#app>footer,.collection .collection-group
 {background-color:var(--color-navi-bg);color:var(--color-navi-fg)}
 
 nav {background-color:inherit}
@@ -41,9 +46,9 @@ a {color:var(--color-ctrl)}
 form input[type="submit"] {color:var(--color-navi-fg);cursor:pointer}
 form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px solid black}
 
-.collection.with-header .collection-header
+.collection.with-header .collection-header, .modal .modal-header
 {background-color:var(--color-head-bg);color:var(--color-head-fg)}
-.collection.with-header .collection-header a
+.collection.with-header .collection-header a, .modal .modal-header a
 {color:var(--color-head-fg)}
 .collection .collection-item
 {background-color:var(--color-item-bg);color:var(--color-item-fg)}
@@ -61,7 +66,11 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 :root {
 --collection-radius:1em;
 --button-radius:1em;
+--modal-radius:1em;
 }
+
+.modal
+{border-radius:var(--modal-radius)}
 
 .collection.with-header
 {border-radius:var(--collection-radius)}
@@ -83,8 +92,12 @@ a[role=button]:hover {color:crimson}
 .btn/*, .Xbtn-large, .btn-small, .btn-like*/
 {border-radius:var(--button-radius)}
 
+
+.bold {font-weight:bold}
+
 .collection .collection-item {line-height:initial}
 .collection.with-header .collection-header {overflow:hidden}
+.collection.with-header .collection-header a {text-decoration:underline}
 .collection.with-header .collection-item {padding-left:20px}
 
 
@@ -93,7 +106,9 @@ body:not([signed]) .signed, body[signed] .unsigned {display:none}
 @media only screen and (min-width: 993px) {.container {width:900px}}
 @media only screen and (min-width: 1201px) {.container {width:75%}}
 
-.modal .modal-footer {height:4.5em;text-align:center}
+.modal .modal-header {z-index:1;position:sticky;top:0;line-height:2em;padding:0 1em;text-align:center}
+.modal .modal-footer {z-index:1;position:sticky;bottom:0;height:4.5em;text-align:center}
+.modal .modal-content {max-height:50vh;overflow-y:auto}
 .no-wrap {overflow:hidden;white-space:nowrap}
 
 .page-header nav {overflow:hidden}
@@ -110,7 +125,6 @@ body:not([signed]) .page-header .nav-signed i {width:0}
 #page-login form {display:table;margin:20vh auto}
 
 #page-main .card-panel {margin:10vh auto}
-#page-main .card-panel .row {height:2em}
 #page-main .buttons {text-align:center;padding:5px}
 @media only screen and (min-width: 993px) {#page-main .buttons {text-align:right}}
 
