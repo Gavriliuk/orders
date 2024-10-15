@@ -8,7 +8,7 @@ body {opacity:1;transition:opacity 1s}
 --color-red:#e44;--color-light-red:#f66;
 --color-bg:#ffe;--color-fg:#004;
 --color-head:#e49444;--color-ctrl:#26a69a;
---color-accent:#a00;
+--color-accent:#a00;--color-accent2:#e00;
 }
 
 /* implicit colors */
@@ -32,7 +32,8 @@ body
 {background-color:var(--color-bg);color:var(--color-fg)}
 
 .accent-fg {color:var(--color-accent)}
-.accent-bg {background-color:var(--color-accent)}
+.accent-bg,.accent-bg:hover:not(.hoverable) {background-color:var(--color-accent)}
+.accent-bg.hoverable:hover {background-color:var(--color-accent2)}
 
 #app>header,#app>footer,.collection .collection-group
 {background-color:var(--color-navi-bg);color:var(--color-navi-fg)}

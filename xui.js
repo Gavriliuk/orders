@@ -186,9 +186,11 @@ app.showPage=(name,data)=>{
   if(name=='products'&&index)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.groups.find(g=>g.i==index))
   if(name=='order'&&data.punct)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.puncts.find(p=>p.i==data.punct))
  }
+ if(!data)data={}
+ if(!data.back)data.back={name:'main',title:tr('Current state')}
  //M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
  if(name=='order')return setup(data.id?'Order':'New order',data.id)
- if(name=='orders')return setup('Orders to upload')
+ if(name=='orders')return setup('Orders to export')
  if(name=='docs')return setup('Orders uploaded')
  if(name=='msgs')return setup('Messages')
  if(name=='routes')return setup('Routes')
@@ -199,6 +201,7 @@ app.showPage=(name,data)=>{
  if(name=='serverdata')return setup('Server Data')
  if(name=='setup')return setup('Settings')
  name='main'
+ data=undefined
  setup('Current state')
 }
 
@@ -277,13 +280,24 @@ app.dbRefresh=x=>{
   app.vm.session(data.session)
   app.vm.d.a.data.ts=new Date
   app.vm.d.a.data.lst=data||structuredClone(app.lsdef)
-  app.vm.d.a.not=data.msg&&data.msg.filter?data.msg.filter(m=>!m.read).length:0
+  //app.vm.d.a.not=data.msg&&data.msg.filter?data.msg.filter(m=>!m.read).length:0
   app.countProducts()
-  app.backup()
+  app.backup('lst')
+  app.backup('ts')
  })
 }
 
 app.dbExport=x=>{
+ const orders=app.vm.d.a.data.doc.filter(d=>!d.nrdoc&&d.ready)
+ if(!orders.length)return app.error(tr('No orders ready to export'))
+ const docs=orders.map(d=>({id:d.id,type:d.type,date:d.date,p:structuredClone(d.p)}))
+ const request={cmd:'dbexport',usr:app.username,pwd:app.password,session:app.vm.session(),docs:docs}
+ app.query(request,'Export orders',data=>{
+  app.vm.session(data.session)
+  if(data.docs&&Array.isArray(data.docs))data.docs.forEach(d=>{
+  })
+  app.backup('doc')
+ })
 }
 
 app.newOrder=x=>{
@@ -294,7 +308,9 @@ app.newOrder=x=>{
 app.showOrder=id=>{
  const doc=app.vm.d.a.data.doc.find(d=>d.id==id)
  if(!doc)return app.error('Order '+id+' not found')
- app.showSubPage('order',id,{punct:doc.punct,date:doc.date,type:doc.type,products:structuredClone(doc.p)})
+ const data={punct:doc.punct,date:doc.date,type:doc.type,products:structuredClone(doc.p)}
+ if(doc.ready)data.ready=true
+ app.showSubPage('order',id,data)
 }
 
 app.editDocType=x=>{
@@ -318,6 +334,11 @@ app.orderNextDate=x=>{
 app.orderPrevDate=x=>{
  app.vm.d.p.data.date=app.vm.txtD(app.vm.prevD(app.vm.d.t.D))
  app.vm.$forceUpdate()
+}
+
+app.toggleOrderReady=x=>{
+ if(app.vm.d.p.data.ready)delete app.vm.d.p.data.ready
+ else app.vm.d.p.data.ready=true
 }
 
 app.addProducts=x=>{
@@ -355,6 +376,7 @@ app.createOrder=close=>{
  app.vm.d.a.data.doc.forEach(d=>{if(d.id>=id)id=d.id+1})
  const doc={id:id,punct:punct,date:date}
  if(type)doc.type=type
+ if(app.vm.d.p.data.ready)doc.ready=true
  doc.p=structuredClone(app.vm.d.p.data.products)
  app.vm.d.a.data.doc.push(doc)
  app.backup('doc')
@@ -369,9 +391,21 @@ app.saveOrder=close=>{
  if(!doc)return app.error('Order '+app.vm.d.p.data.id+' not found')
  if(doc.date!=app.vm.d.p.data.date)doc.date=app.vm.d.p.data.date
  if(doc.type!=app.vm.d.p.data.type)doc.type=app.vm.d.p.data.type
+ if(app.vm.d.p.data.ready&&!doc.ready)doc.ready=true
+ else if(doc.ready&&!app.vm.d.p.data.ready)delete doc.ready
  doc.p=structuredClone(app.vm.d.p.data.products)
  app.backup('doc')
  if(close)app.showSuperPage()
+}
+
+app.deleteOrder=async()=>{
+ if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ const pos=app.vm.d.a.data.doc.findIndex(o=>o.id==app.vm.d.p.data.id)
+ if(pos<0)return app.error('Order '+app.vm.d.p.data.id+' not found')
+ if(!await app.confirm(tr('Delete order')+'?'))return
+ app.vm.d.a.data.doc.splice(pos,1)
+ app.backup('doc')
+ app.showSuperPage()
 }
 
 app.showMsg=id=>{

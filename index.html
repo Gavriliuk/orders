@@ -76,8 +76,12 @@
  <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</span>
 </a>
 <a class="js collection-item" onclick="app.showSubPage('orders')">
- <span class="bold">{{tr('Orders to upload')}}:</span>
+ <span class="bold">{{tr('Orders to export')}}:</span>
  <span class="right">{{d.a.data.doc.filter(d=>!d.nrdoc).length||tr('No data')}}</span>
+</a>
+<a class="js collection-item" onclick="app.showSubPage('docs')">
+ <span class="bold">{{tr('Orders exported')}}:</span>
+ <span class="right">{{d.a.data.doc.filter(d=>d.nrdoc).length||tr('No data')}}</span>
 </a>
 <a class="js collection-item" onclick="app.showSubPage('routes')">
  <span class="bold">{{tr('Routes')}}:</span>
@@ -99,7 +103,7 @@
 <div class="collection-header caption right-align">
  <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
 </div>
-<a v-for="r in d.a.data.lst.routes" class="js collection-item" :onclick="'app.showSubPage(\'route\','+r.i+')'">{{r.i}}: {{r.n}}<span class="right">[{{d.a.data.lst.puncts.filter(p=>p.r==r.i).length}}]</span></a>
+<a v-for="r in d.a.data.lst.routes" class="js collection-item" :onclick="'app.showSubPage(\'route\','+r.i+')'">{{r.n}}<span class="right">[{{d.a.data.lst.puncts.filter(p=>p.r==r.i).length}}]</span></a>
 <div v-if="!d.a.data.lst.routes.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
@@ -158,7 +162,7 @@
  <a class="js waves-effect waves-light btn right" onclick="app.newOrder()"><i class="material-icons">add</i></a>
 </div>
 <a v-for="o in d.t.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
- <div class="col s3 l2 right-align">#{{o.id}}:&nbsp;</div>
+ <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check_box':'check_box_outline_blank'}}</i>#{{o.id}}:&nbsp;</div>
  <div class="col s3 l2">{{fmtd(o.date)}}</div>
  <div class="col s6 l8">{{o.type&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.type))}}</div>
 </a>
@@ -173,14 +177,14 @@
 <div class="collection-header caption right-align">
  <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
-<div v-if="d.t.GG.length" class="collection-group row">
+<div v-if="d.t.GG.length" class="collection-group last row">
  <div class="col s12 l6 center bold">{{tr('Groups')}}</div>
  <div class="col s4 l2 right-align">[{{tr('subgroups')}}]</div>
  <div class="col s4 l2 right-align">[{{tr('products')}}]</div>
  <div class="col s4 l2 right-align">[{{tr('total')}}]</div>
 </div>
 <a v-for="g in d.t.GG" class="js collection-item wide row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
- <div class="col s12 l6">{{g.i}}: {{g.n}}</div>
+ <div class="col s12 l6">[{{g.n}}]</div>
  <div class="col s4 l2 right-align">{{g.cg&&('['+g.cg+']')}}</div>
  <div class="col s4 l2 right-align">{{g.cp&&('['+g.cp+']')}}</div>
  <div class="col s4 l2 right-align">{{g.cpp&&('['+g.cpp+']')}}</div>
@@ -196,11 +200,8 @@
 </div>
 
 <div v-if="d.p.name=='docs'" id="page-docs">
-</div>
-
-<div v-if="d.p.name=='orders'" id="page-orders">
 <div class="collection with-header flow-text no-select"
- :js1="(d.t.OO=d.a.data.doc.filter(o=>!o.nrdoc))&&null">
+ :js1="(d.t.OO=d.a.data.doc.filter(o=>o.nrdoc))&&null">
 <div class="collection-header caption right-align">
  <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
@@ -210,6 +211,27 @@
  <div class="col s6 l8">{{oval(d.a.data.lst.puncts.find(p=>p.i==o.punct))}}</div>
 </a>
 <div v-if="!d.t.OO.length" class="collection-item center">{{tr('No data')}}</div>
+</div>
+</div>
+
+<div v-if="d.p.name=='orders'" id="page-orders">
+<div class="collection with-header flow-text no-select"
+ :js1="(d.t.OO=d.a.data.doc.filter(o=>!o.nrdoc))&&null"
+ :js2="(d.t.OR=d.t.OO.filter(o=>o.ready))&&null">
+<div class="collection-header caption right-align">
+ <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
+</div>
+<a v-for="o in d.t.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
+ <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check_box':'check_box_outline_blank'}}</i>#{{o.id}}:&nbsp;</div>
+ <div class="col s3 l2">{{fmtd(o.date)}}</div>
+ <div class="col s6 l8">{{oval(d.a.data.lst.puncts.find(p=>p.i==o.punct))}}</div>
+</a>
+<div v-if="!d.t.OO.length" class="collection-item center">{{tr('No data')}}</div>
+</div>
+<div v-if="d.t.OR.length">
+ <span class="flow-text caption" style="margin-left:24px">{{tr('Orders ready')}}:</span>
+ <span class="flow-text bold accent-fg" style="margin-left:12px">{{d.t.OR.length}}</span>
+ <a class="js waves-effect waves-light btn right accent-bg hoverable" onclick="app.dbExport()">{{tr('Export')}}</a>
 </div>
 </div>
 
@@ -239,11 +261,17 @@
  </div>
 </div>
 </div>
-<div class="center">
- <a v-if="!d.p.data.id" class="js waves-effect waves-light btn" onclick="app.createOrder()">{{tr('Create order')}}</a>
- <a v-if="!d.p.data.id" class="js waves-effect waves-light btn" onclick="app.createOrder(1)">{{tr('Create and close')}}</a>
- <a v-if="d.p.data.id" class="js waves-effect waves-light btn" onclick="app.saveOrder()">{{tr('Save order')}}</a>
- <a v-if="d.p.data.id" class="js waves-effect waves-light btn" onclick="app.saveOrder(1)">{{tr('Save and close')}}</a>
+<div class="right-align">
+ <label v-if="d.p.data.id" class=" flow-text left" style="margin-left:10px">
+  <input type="checkbox" class="filled-in" :checked="d.p.data.ready" />
+  <span class="caption" style="font-size:revert" onclick="app.toggleOrderReady()">{{tr('Ready to export')}}</span>
+ </label>
+ <span style="white-space:nowrap">
+  <a v-if="!d.p.data.id" class="js waves-effect waves-light btn" onclick="app.createOrder()">{{tr('Create')}}</a>
+  <a v-if="!d.p.data.id" class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.createOrder(1)">{{tr('Create and close')}}</a>
+  <a v-if="d.p.data.id" class="js waves-effect waves-light btn" onclick="app.saveOrder()">{{tr('Save')}}</a>
+  <a v-if="d.p.data.id" class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.saveOrder(1)">{{tr('Save and close')}}</a>
+ </style>
 </div>
 <div class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Products')}}
@@ -258,6 +286,9 @@
  <div v-if="!p.g" class="col s4 l1">&nbsp;({{p.um}})</div>
 </a>
 <div v-if="!d.t.P.length" class="collection-item center">{{tr('No data')}}</div>
+</div>
+<div v-if="d.p.data.id" class="right-align">
+ <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.deleteOrder()">{{tr('Delete')}}</a>
 </div>
 </div>
 
@@ -283,8 +314,7 @@
 </div>
 <div v-if="d.p.data.path=='/'" class="collection-item" style="overflow:hidden">
  <span class="caption">{{tr('Data loaded')}}:</span>
- <span>{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</span>
- <a class="js waves-effect waves-light btn right" onclick="app.dbRefresh()">{{tr('Refresh')}}</a>
+ <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}} <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></span>
 </div>
 <a v-for="(n,i) in d.t.A" class="collection-item"
  :js1="(d.t.n=d.p.data.node[n])&&null||null"
@@ -292,7 +322,7 @@
  :class="d.t.l?'js':null"
  :onclick="d.t.l?('app.showPageServerData('+(d.t.a?i:'\''+n+'\'')+')'):null">
  {{d.t.a?(n&&n.i&&n.n?(n.i+':'):''):(n+':')}}
- {{d.t.a?(n.n||n):Array.isArray(d.t.n)?('['+d.t.n.length+']'):(d.t.n&&d.t.n.n||d.t.n)}}
+ <span class="right">{{d.t.a?(n.n||n):Array.isArray(d.t.n)?('['+d.t.n.length+']'):(d.t.n&&d.t.n.n||d.t.n)}}</span>
 </a>
 <div v-if="!d.t.A.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
@@ -344,7 +374,7 @@
 <div class="fixed-action-btn no-select signed">
 <a class="btn-floating btn-large"><i class="large material-icons">menu</i></a>
 <ul>
-<li><a class="btn-floating pink accent-3" onclick="app.showPage('order')"><i class="material-icons">note_add</i></a></li>
+<li><a class="btn-floating accent-bg hoverable" onclick="app.showPage('orders')"><i class="material-icons">note_add</i></a></li>
 <li><a class="btn-floating" onclick="app.showPage('docs')"><i class="material-icons">note</i></a></li>
 <li><a class="btn-floating" onclick="app.showPage('msgs')"><i :class="'material-icons'+(d.a.not?' yellow-text':'')">mail</i></a></li>
 <li><a class="btn-floating" onclick="app.showPage('setup')"><i class="material-icons">settings</i></a></li>
@@ -359,8 +389,8 @@
   <div>{{d.m.msgbox.text}}</div>
  </div>
  <div class="modal-footer">
-  <a class="js waves-effect waves-light btn modal-close Xwaves-effect Xwaves-green Xbtn-flat" onclick="app.vm.d.m.msgbox.ok=true">OK</a>
-  <a v-if="d.m.msgbox.ok!=null" class="js waves-effect waves-light btn modal-close Xwaves-effect Xwaves-green Xbtn-flat">{{tr('Cancel')}}</a>
+  <a class="js waves-effect waves-light btn modal-close accent-bg hoverable" onclick="app.vm.d.m.msgbox.ok=true">OK</a>
+  <a v-if="d.m.msgbox.ok!=null" class="js waves-effect waves-light btn modal-close">{{tr('Cancel')}}</a>
  </div>
 </div>
 
@@ -388,7 +418,7 @@
  </div>
 </div>
 
-<div id="modal-products" class="modal" style="max-height:90%">
+<div id="modal-products" class="modal" style="max-height:90%;min-width:80%">
  <div class="modal-header flow-text caption last row"
    :js1="(d.m.products.G=d.m.products.g&&d.a.data.lst.groups.find(g=>g.i==d.m.products.g))&&null"
    :js2="(d.m.products.p=d.m.products.G&&d.m.products.G.p)&&null"
@@ -400,7 +430,7 @@
    <i class="material-icons">arrow_upward</i>{{oval(d.m.products.P,'n','All products',1)}}
   </a>
  </div>
- <div class="modal-content flow-text">
+ <div v-if="d.p.name=='order'" class="modal-content flow-text">
   <div class="collection flow-text no-select" style="margin:0">
    <div v-if="d.m.products.GG.length&&d.m.products.PP.length" class="collection-group center bold">{{tr('Groups')}}</div>
    <a v-for="g in d.m.products.GG" class="js collection-item wide row"
@@ -411,9 +441,10 @@
    <div v-if="d.m.products.GG.length&&d.m.products.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
    <a v-for="p in d.m.products.PP" class="js collection-item wide row"
     :onclick="'app.editProductQty('+p.i+')'">
-    <div class="col s12 l8">{{p.i}}: {{p.n}}</div>
-    <div class="col s6 l2 right-align">{{p.cant}}</div>
-    <div class="col s6 l2">&nbsp;({{p.um}})</div>
+    <div class="col s12 l6">{{p.i}}: {{p.n}}</div>
+    <div class="col s4 l2 right-align bold accent-fg">{{oval(d.p.data.products.find(t=>t.i==p.i),'q')}}</div>
+    <div class="col s4 l2 right-align">{{p.cant?('x '+p.cant):''}}</div>
+    <div class="col s4 l2">&nbsp;({{p.um}})</div>
    </a>
    <div v-if="!d.m.products.GG.length&&!d.m.products.PP.length" class="collection-item center">{{tr('No data')}}</div>
   </div>
@@ -437,7 +468,7 @@
   </div>
  </div>
  <div class="modal-footer">
-  <a class="js waves-effect waves-light btn modal-close default" onclick="app.setProductQty()">OK</a>
+  <a class="js waves-effect waves-light btn modal-close accent-bg hoverable" onclick="app.setProductQty()">OK</a>
   <a class="js waves-effect waves-light btn modal-close">{{tr('Cancel')}}</a>
  </div>
 </div>
