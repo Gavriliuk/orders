@@ -199,6 +199,18 @@
 </div>
 
 <div v-if="d.p.name=='orders'" id="page-orders">
+<div class="collection with-header flow-text no-select"
+ :js1="(d.t.OO=d.a.data.doc.filter(o=>!o.nrdoc))&&null">
+<div class="collection-header caption right-align">
+ <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
+</div>
+<a v-for="o in d.t.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
+ <div class="col s3 l2 right-align">#{{o.id}}:&nbsp;</div>
+ <div class="col s3 l2">{{fmtd(o.date)}}</div>
+ <div class="col s6 l8">{{oval(d.a.data.lst.puncts.find(p=>p.i==o.punct))}}</div>
+</a>
+<div v-if="!d.t.OO.length" class="collection-item center">{{tr('No data')}}</div>
+</div>
 </div>
 
 <div v-if="d.p.name=='order'" id="page-order">

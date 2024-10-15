@@ -13,7 +13,7 @@ tr(['Username','Имя пользователя',''])
 tr(['Password','Пароль',''])
 // Page main
 tr(['Data loaded','Данные загружены',''])
-tr(['Orders to upload','Заказов к отправке',''])
+tr(['Orders to upload','Заказы к отправке',''])
 tr(['Orders uploaded','Отправлено заказов',''])
 tr(['No data','Нет данных',''])
 tr(['Current state','Текущее состояние',''])
