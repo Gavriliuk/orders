@@ -133,7 +133,7 @@
 
 <div v-if="d.p.name=='client'" id="page-client">
 <div class="collection with-header flow-text no-select"
- :js1="d.p.data.OO=d.a.data.doc.filter(o=>o.punct==d.p.data.id)">
+ :js1="(d.p.data.OO=d.a.data.doc.filter(o=>o.punct==d.p.data.id))&&null">
 <div class="collection-header caption">
  <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
  <span class="left">{{d.p.data.punct.n}}</span>
@@ -169,21 +169,31 @@
 </div>
 
 <div v-if="d.p.name=='products'" id="page-products">
-<div class="collection with-header flow-text no-select">
+<div class="collection with-header flow-text no-select"
+ :js1="(d.p.data.GG=d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)))&&null"
+ :js2="(d.p.data.PP=d.a.data.lst.products.filter(p=>p.gr==d.p.data.id))&&null">
 <div class="collection-header caption right-align">
  <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
-<a v-for="g in d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0))" class="js collection-item wide row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
-<div class="col s8 l10">{{g.i}}: {{g.n}}</div>
-<div class="col s2 l1">[{{d.a.data.lst.groups.filter(s=>s.p==g.i).length}}]</div>
-<div class="col s2 l1 right-align">[{{d.a.data.lst.products.filter(p=>p.gr==g.i).length}}]</div>
-</a>
-<div v-for="p in d.a.data.lst.products.filter(p=>p.gr==d.p.data.id)" class="collection-item wide row">
-<div class="col s8 l10">{{p.i}}: {{p.n}}</div>
-<div class="col s2 l1 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
-<div class="col s2 l1">&nbsp;({{p.um}})</div>
+<div v-if="d.p.data.GG.length" class="collection-group wide row">
+ <div class="col s12 l6 center bold">{{tr('Groups')}}</div>
+ <div class="col s4 l2 right-align">[{{tr('subgroups')}}]</div>
+ <div class="col s4 l2 right-align">[{{tr('products')}}]</div>
+ <div class="col s4 l2 right-align">[{{tr('total')}}]</div>
 </div>
-<div v-if="!d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)).length&&!d.a.data.lst.products.filter(p=>p.gr==d.p.data.id).length" class="collection-item center">{{tr('No data')}}</div>
+<a v-for="g in d.p.data.GG" class="js collection-item wide row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
+ <div class="col s12 l6">{{g.i}}: {{g.n}}</div>
+ <div class="col s4 l2 right-align">{{g.cg&&('['+g.cg+']')}}</div>
+ <div class="col s4 l2 right-align">{{g.cp&&('['+g.cp+']')}}</div>
+ <div class="col s4 l2 right-align">{{g.cpp&&('['+g.cpp+']')}}</div>
+</a>
+<div v-if="d.p.data.GG.length&&d.p.data.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
+<div v-for="p in d.p.data.PP" class="collection-item wide row">
+ <div class="col s12 l8">{{p.i}}: {{p.n}}</div>
+ <div class="col s8 l2 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
+ <div class="col s4 l2">&nbsp;({{p.um}})</div>
+</div>
+<div v-if="!d.p.data.GG.length&&!d.p.data.PP.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
@@ -195,10 +205,10 @@
 
 <div v-if="d.p.name=='order'" id="page-order">
 <div class="collection with-header flow-text no-select"
- :js1="d.p.data.D=new Date(d.p.data.date)"
- :js2="d.p.data.N=new Date(curD())"
- :js3="d.p.data.O=Math.floor((d.p.data.D-d.p.data.N)/86400000)"
- :js4="d.p.data.P=docpp()">
+ :js1="(d.p.data.D=new Date(d.p.data.date))&&null"
+ :js2="(d.p.data.N=new Date(curD()))&&null"
+ :js3="(d.p.data.O=Math.floor((d.p.data.D-d.p.data.N)/86400000))&&null"
+ :js4="(d.p.data.P=docpp())&&null">
 <div class="collection-header caption right-align">
  <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
 </div>
@@ -231,7 +241,7 @@
 </div>
 <a v-for="p in d.p.data.P" :class="p.g?'collection-group center':'js collection-item wide row'"
   :onclick="p.g?null:'app.editProductQty('+p.i+')'">
- <div v-if="p.g" class="collection-group center">[{{p.i}}: {{p.n}}]</div>
+ <div v-if="p.g" class="collection-group center bold">{{p.n}}</div>
  <div v-if="!p.g" class="col s12 l9">{{p.i}}: {{p.n}}</div>
  <div v-if="!p.g" class="col s4 l1 right-align bold accent-fg">{{p.q}}</div>
  <div v-if="!p.g" class="col s4 l1 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
@@ -362,11 +372,11 @@
 
 <div id="modal-products" class="modal" style="max-height:90%">
  <div class="modal-header flow-text caption last row"
-   :js1="d.m.products.G=d.m.products.g&&d.a.data.lst.groups.find(g=>g.i==d.m.products.g)"
-   :js2="d.m.products.p=d.m.products.G&&d.m.products.G.p"
-   :js3="d.m.products.P=d.m.products.p&&d.a.data.lst.groups.find(g=>g.i==d.m.products.p)"
-   :js4="d.m.products.GG=d.a.data.lst.groups?d.a.data.lst.groups.filter(g=>g.p==(d.m.products.g||0)):[]"
-   :js5="d.m.products.PP=d.a.data.lst.products?d.a.data.lst.products.filter(p=>p.gr==(d.m.products.g||0)):[]">
+   :js1="(d.m.products.G=d.m.products.g&&d.a.data.lst.groups.find(g=>g.i==d.m.products.g))&&null"
+   :js2="(d.m.products.p=d.m.products.G&&d.m.products.G.p)&&null"
+   :js3="(d.m.products.P=d.m.products.p&&d.a.data.lst.groups.find(g=>g.i==d.m.products.p))&&null"
+   :js4="(d.m.products.GG=d.a.data.lst.groups?d.a.data.lst.groups.filter(g=>g.cpp&&g.p==(d.m.products.g||0)):[])&&null"
+   :js5="(d.m.products.PP=d.a.data.lst.products?d.a.data.lst.products.filter(p=>p.gr==(d.m.products.g||0)):[])&&null">
   <span class="col s12 l6 left-align">{{oval(d.m.products.G,'n','All products',1)}}</span>
   <a v-if="d.m.products.g" class="js col s12 l6 right-align" :onclick="'app.vm.d.m.products.g=app.vm.d.m.products.p'">
    <i class="material-icons">arrow_upward</i>{{oval(d.m.products.P,'n','All products',1)}}
@@ -374,11 +384,13 @@
  </div>
  <div class="modal-content flow-text">
   <div class="collection flow-text no-select" style="margin:0">
+   <div v-if="d.m.products.GG.length&&d.m.products.PP.length" class="collection-group center bold">{{tr('Groups')}}</div>
    <a v-for="g in d.m.products.GG" class="js collection-item wide row"
     :onclick="'app.vm.d.m.products.g='+g.i">
-    <div class="col s8 l10">[{{g.i}}: {{g.n}}]</div>
-    <div class="col s4 l2 right-align">[{{d.a.data.lst.groups.filter(s=>s.p==g.i).length}}/{{d.a.data.lst.products.filter(p=>p.gr==g.i).length}}]</div>
+    <div class="col s8 l10 bold">{{g.n}}</div>
+    <div class="col s4 l2 right-align">[{{g.cpp}}]</div>
    </a>
+   <div v-if="d.m.products.GG.length&&d.m.products.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
    <a v-for="p in d.m.products.PP" class="js collection-item wide row"
     :onclick="'app.editProductQty('+p.i+')'">
     <div class="col s12 l8">{{p.i}}: {{p.n}}</div>

@@ -269,13 +269,26 @@ app.query=(request,caption,resolve)=>{
  })
 }
 
+app.countProducts=G=>{
+ if(G){
+  const cp=app.vm.d.a.data.lst.products.filter(p=>p.gr==G.i).length
+  if(cp)G.cp=G.cpp=cp
+  app.vm.d.a.data.lst.groups.forEach(g=>{if(g.p==G.i){
+   app.countProducts(g)
+   G.cg=(G.cg||0)+1
+   if(g.cpp)G.cpp=(G.cpp||0)+g.cpp
+  }})
+ }else app.vm.d.a.data.lst.groups.forEach(g=>{if(!g.p)app.countProducts(g)})
+}
+
 app.dbRefresh=x=>{
  const request={cmd:'dbrefresh',usr:app.username,pwd:app.password,session:app.vm.session()}
  app.query(request,'Refresh database',data=>{
   app.vm.session(data.session)
   app.vm.d.a.data.ts=new Date
-  app.vm.d.a.data.lst=data||[]
+  app.vm.d.a.data.lst=data||structuredClone(app.lsdef)
   app.vm.d.a.not=data.msg&&data.msg.filter?data.msg.filter(m=>!m.read).length:0
+  app.countProducts()
   app.backup()
  })
 }
