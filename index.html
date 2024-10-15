@@ -71,27 +71,25 @@
 
 <div v-if="d.p.name=='main'" id="page-main">
 <div class="card-panel hoverable collection no-wrap flow-text no-select">
-<div class="collection-item row">
- <div class="col s6 l6 caption"><a class="js" onclick="app.showPageServerData()">{{tr('Data loaded')}}:</a></div>
- <div class="col s6 l6 right-align">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</div>
- <div class="col s12 l12 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></div>
-</div>
-<a class="js collection-item row" onclick="app.showSubPage('orders')">
- <div class="col s8 l6 bold">{{tr('Orders to upload')}}:</div>
- <div class="col s4 l6 right-align">{{d.a.data.doc.filter(d=>!d.nrdoc).length||tr('No data')}}</div>
- <!--div v-if="d.a.data.doc.filter(d=>!d.nrdoc).length" class="col s12 l4 buttons"><a class="js waves-effect waves-light btn" onclick="app.dbExport()">{{tr('Upload')}}</a></div-->
+<a class="js collection-item" onclick="app.showPageServerData()">
+ <span class="bold">{{tr('Data loaded')}}:</span>
+ <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</span>
 </a>
-<a class="js collection-item row" onclick="app.showSubPage('routes')">
- <div class="col s6 l6 bold">{{tr('Routes')}}:</div>
- <div class="col s6 l6 right-align">{{d.a.data.lst.routes&&d.a.data.lst.routes.length||tr('No data')}}</div>
+<a class="js collection-item" onclick="app.showSubPage('orders')">
+ <span class="bold">{{tr('Orders to upload')}}:</span>
+ <span class="right">{{d.a.data.doc.filter(d=>!d.nrdoc).length||tr('No data')}}</span>
 </a>
-<a class="js collection-item row" onclick="app.showSubPage('clients')">
- <div class="col s6 l6 bold">{{tr('Clients')}}:</div>
- <div class="col s6 l6 right-align">{{d.a.data.lst.puncts&&d.a.data.lst.puncts.length||tr('No data')}}</div>
+<a class="js collection-item" onclick="app.showSubPage('routes')">
+ <span class="bold">{{tr('Routes')}}:</span>
+ <span class="right">{{d.a.data.lst.routes&&d.a.data.lst.routes.length||tr('No data')}}</span>
 </a>
-<a class="js collection-item last row" onclick="app.showSubPage('products')">
- <div class="col s6 l6 bold">{{tr('Products')}}:</div>
- <div class="col s6 l6 right-align">{{d.a.data.lst.products&&d.a.data.lst.products.length||tr('No data')}}</div>
+<a class="js collection-item" onclick="app.showSubPage('clients')">
+ <span class="bold">{{tr('Clients')}}:</span>
+ <span class="right">{{d.a.data.lst.puncts&&d.a.data.lst.puncts.length||tr('No data')}}</span>
+</a>
+<a class="js collection-item" onclick="app.showSubPage('products')">
+ <span class="bold">{{tr('Products')}}:</span>
+ <span class="right">{{d.a.data.lst.products&&d.a.data.lst.products.length||tr('No data')}}</span>
 </a>
 </div>
 </div>
@@ -133,7 +131,7 @@
 
 <div v-if="d.p.name=='client'" id="page-client">
 <div class="collection with-header flow-text no-select"
- :js1="(d.p.data.OO=d.a.data.doc.filter(o=>o.punct==d.p.data.id))&&null">
+ :js1="(d.t.OO=d.a.data.doc.filter(o=>o.punct==d.p.data.id))&&null">
 <div class="collection-header caption">
  <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
  <span class="left">{{d.p.data.punct.n}}</span>
@@ -159,41 +157,41 @@
 <div class="collection-header caption">{{tr('Orders')}}
  <a class="js waves-effect waves-light btn right" onclick="app.newOrder()"><i class="material-icons">add</i></a>
 </div>
-<a v-for="o in d.p.data.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
+<a v-for="o in d.t.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
  <div class="col s3 l2 right-align">#{{o.id}}:&nbsp;</div>
  <div class="col s3 l2">{{fmtd(o.date)}}</div>
  <div class="col s6 l8">{{o.type&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.type))}}</div>
 </a>
-<div v-if="!d.p.data.OO.length" class="collection-item center">{{tr('No data')}}</div>
+<div v-if="!d.t.OO.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
 <div v-if="d.p.name=='products'" id="page-products">
 <div class="collection with-header flow-text no-select"
- :js1="(d.p.data.GG=d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)))&&null"
- :js2="(d.p.data.PP=d.a.data.lst.products.filter(p=>p.gr==d.p.data.id))&&null">
+ :js1="(d.t.GG=d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)))&&null"
+ :js2="(d.t.PP=d.a.data.lst.products.filter(p=>p.gr==d.p.data.id))&&null">
 <div class="collection-header caption right-align">
  <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
-<div v-if="d.p.data.GG.length" class="collection-group wide row">
+<div v-if="d.t.GG.length" class="collection-group row">
  <div class="col s12 l6 center bold">{{tr('Groups')}}</div>
  <div class="col s4 l2 right-align">[{{tr('subgroups')}}]</div>
  <div class="col s4 l2 right-align">[{{tr('products')}}]</div>
  <div class="col s4 l2 right-align">[{{tr('total')}}]</div>
 </div>
-<a v-for="g in d.p.data.GG" class="js collection-item wide row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
+<a v-for="g in d.t.GG" class="js collection-item wide row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
  <div class="col s12 l6">{{g.i}}: {{g.n}}</div>
  <div class="col s4 l2 right-align">{{g.cg&&('['+g.cg+']')}}</div>
  <div class="col s4 l2 right-align">{{g.cp&&('['+g.cp+']')}}</div>
  <div class="col s4 l2 right-align">{{g.cpp&&('['+g.cpp+']')}}</div>
 </a>
-<div v-if="d.p.data.GG.length&&d.p.data.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
-<div v-for="p in d.p.data.PP" class="collection-item wide row">
+<div v-if="d.t.GG.length&&d.t.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
+<div v-for="p in d.t.PP" class="collection-item wide row">
  <div class="col s12 l8">{{p.i}}: {{p.n}}</div>
  <div class="col s8 l2 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
  <div class="col s4 l2">&nbsp;({{p.um}})</div>
 </div>
-<div v-if="!d.p.data.GG.length&&!d.p.data.PP.length" class="collection-item center">{{tr('No data')}}</div>
+<div v-if="!d.t.GG.length&&!d.t.PP.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
@@ -205,10 +203,10 @@
 
 <div v-if="d.p.name=='order'" id="page-order">
 <div class="collection with-header flow-text no-select"
- :js1="(d.p.data.D=new Date(d.p.data.date))&&null"
- :js2="(d.p.data.N=new Date(curD()))&&null"
- :js3="(d.p.data.O=Math.floor((d.p.data.D-d.p.data.N)/86400000))&&null"
- :js4="(d.p.data.P=docpp())&&null">
+ :js1="(d.t.D=new Date(d.p.data.date))&&null"
+ :js2="(d.t.N=new Date(curD()))&&null"
+ :js3="(d.t.O=Math.floor((d.t.D-d.t.N)/86400000))&&null"
+ :js4="(d.t.P=docpp())&&null">
 <div class="collection-header caption right-align">
  <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
 </div>
@@ -220,13 +218,13 @@
  </div>
 </div>
 <div class="collection-item wide row">
- <div class="col s12 l6 caption">{{tr('Delivery date')}}:</div>
+ <div class="col s8 l6 caption">{{tr('Delivery date')}}:</div>
+ <div class="col s4 l2">({{d.t.O>1?('+'+d.t.O+' '+tr('days')):d.t.O==1?tr('tomorrow'):tr('today')}})</div>
  <div class="col s12 l4 right-align">
-  <a v-if="(d.p.data.O>0)" class="js waves-effect waves-light btn icon" onclick="app.orderPrevDate()"><i class="material-icons">exposure_neg_1</i></a>
-  <span>&nbsp;{{fmtD(d.p.data.D)}}&nbsp;</span>
+  <a v-if="(d.t.O>0)" class="js waves-effect waves-light btn icon" onclick="app.orderPrevDate()"><i class="material-icons">exposure_neg_1</i></a>
+  <span>&nbsp;{{fmtD(d.t.D)}}&nbsp;</span>
   <a class="js waves-effect waves-light btn icon" onclick="app.orderNextDate()"><i class="material-icons">exposure_plus_1</i></a>
  </div>
- <div class="col s12 l2 right-align">({{d.p.data.O>1?('+'+d.p.data.O+' '+tr('days')):d.p.data.O==1?tr('tomorrow'):tr('today')}})</div>
 </div>
 </div>
 <div class="center">
@@ -239,7 +237,7 @@
 <div class="collection-header caption">{{tr('Products')}}
  <a class="js waves-effect waves-light btn right" onclick="app.addProducts()"><i class="material-icons">add</i></a>
 </div>
-<a v-for="p in d.p.data.P" :class="p.g?'collection-group center':'js collection-item wide row'"
+<a v-for="p in d.t.P" :class="p.g?'collection-group center':'js collection-item wide row'"
   :onclick="p.g?null:'app.editProductQty('+p.i+')'">
  <div v-if="p.g" class="collection-group center bold">{{p.n}}</div>
  <div v-if="!p.g" class="col s12 l9">{{p.i}}: {{p.n}}</div>
@@ -247,7 +245,7 @@
  <div v-if="!p.g" class="col s4 l1 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
  <div v-if="!p.g" class="col s4 l1">&nbsp;({{p.um}})</div>
 </a>
-<div v-if="!d.p.data.P.length" class="collection-item center">{{tr('No data')}}</div>
+<div v-if="!d.t.P.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
@@ -264,19 +262,27 @@
 </div>
 
 <div v-if="d.p.name=='serverdata'" id="page-serverdata">
-<div class="collection with-header flow-text no-select">
-<div class="collection-header last row caption">
- <div class="col l6 s12">{{d.p.data[2]||'/'}}</div>
- <a class="js col l6 s12 right-align"
-  :onclick="d.p.data[2]?'app.showPageServerData(-1)':'app.showPage()'"><i class="material-icons">arrow_upward</i>{{d.p.data[3]}}</a>
+<div class="collection with-header flow-text no-select"
+ :js1="(d.t.a=Array.isArray(d.p.data.node))?null:null"
+ :js2="(d.t.A=d.t.a?d.p.data.node:Object.keys(d.p.data.node))&&null">
+<div class="collection-header caption">
+ <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{oval(d.p.data.back.data,'title')||oval(d.p.data.back,'title')}}</a>
+ <div class="left">{{d.p.data.path}}</div>
 </div>
-<a v-for="(n,i) in Array.isArray(d.p.data[0])?d.p.data[0]:Object.keys(d.p.data[0])" class="collection-item"
- :class="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?'js':null"
- :onclick="(Array.isArray(d.p.data[0])?(n&&(typeof n=='object')):(d.p.data[0][n]&&(typeof d.p.data[0][n]=='object')))?('app.showPageServerData(1,'+(Array.isArray(d.p.data[0])?i:'\''+n+'\'')+')'):null">
- {{Array.isArray(d.p.data[0])?(n&&n.i&&n.n?(n.i+':'):''):(n+':')}}
- {{Array.isArray(d.p.data[0])?(n.n||n):Array.isArray(d.p.data[0][n])?('['+d.p.data[0][n].length+']'):(d.p.data[0][n]&&d.p.data[0][n].n||d.p.data[0][n])}}
+<div v-if="d.p.data.path=='/'" class="collection-item" style="overflow:hidden">
+ <span class="caption">{{tr('Data loaded')}}:</span>
+ <span>{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</span>
+ <a class="js waves-effect waves-light btn right" onclick="app.dbRefresh()">{{tr('Refresh')}}</a>
+</div>
+<a v-for="(n,i) in d.t.A" class="collection-item"
+ :js1="(d.t.n=d.p.data.node[n])&&null||null"
+ :js2="(d.t.l=d.t.a?(n&&(typeof n=='object')):(d.t.n&&(typeof d.t.n=='object')))&&null||null"
+ :class="d.t.l?'js':null"
+ :onclick="d.t.l?('app.showPageServerData('+(d.t.a?i:'\''+n+'\'')+')'):null">
+ {{d.t.a?(n&&n.i&&n.n?(n.i+':'):''):(n+':')}}
+ {{d.t.a?(n.n||n):Array.isArray(d.t.n)?('['+d.t.n.length+']'):(d.t.n&&d.t.n.n||d.t.n)}}
 </a>
-<div v-if="!(Array.isArray(d.p.data[0])?d.p.data[0]:Object.keys(d.p.data[0])).length" class="collection-item center">{{tr('No data')}}</div>
+<div v-if="!d.t.A.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 

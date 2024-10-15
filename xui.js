@@ -1,7 +1,7 @@
 const app={}
 
 app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',signed:0,not:0,data:{ts:'',msg:[],doc:[],lst:[],rep:[]}}
- ,p:{name:'',title:'',data:{}}
+ ,p:{name:'',title:'',data:{}},t:{}
  ,m:{msgbox:{caption:'',text:'',ok:false},chgpwd:{ok:false},query:{caption:'',status:'',time:0,ok:false},products:{g:0},qty:{P:null,cant:0}}
 }}
 ,computed:{app:x=>app,langs:x=>tr.prototype.list}
@@ -175,6 +175,7 @@ app.showPage=(name,data)=>{
  //app.log('showPage',name,data)
  //app.log('showPage',name,(''+JSON.stringify(data)).substr(0,100))
  const setup=(title,index,key,value)=>{
+  app.vm.d.t={}
   app.vm.d.p.name=name
   app.vm.d.p.data=data
   app.vm.d.p.title=tr(title)+(index?' #'+index:'')
@@ -186,8 +187,6 @@ app.showPage=(name,data)=>{
   if(name=='order'&&data.punct)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.puncts.find(p=>p.i==data.punct))
  }
  //M.FloatingActionButton.getInstance(document.querySelectorAll('.fixed-action-btn')[0]).close()
- if(name=='serverdata')return setup('Server Data')
- if(app.pageServerDataStack.length)app.pageServerDataStack=[]
  if(name=='order')return setup(data.id?'Order':'New order',data.id)
  if(name=='orders')return setup('Orders to upload')
  if(name=='docs')return setup('Orders uploaded')
@@ -197,6 +196,7 @@ app.showPage=(name,data)=>{
  if(name=='clients')return setup(data&&data.id?'Stores':'Clients',data&&data.id)
  if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.find(p=>p.i==data.id))
  if(name=='products')return setup('Products',data&&data.id)
+ if(name=='serverdata')return setup('Server Data')
  if(name=='setup')return setup('Settings')
  name='main'
  setup('Current state')
@@ -205,32 +205,22 @@ app.showPage=(name,data)=>{
 app.showSubPage=(name,id,values)=>{
  //app.log('showSubPage',name,id,values)
  //app.log('showSubPage',name,id,(''+JSON.stringify(values)).substr(0,100))
- const data={id:id,back:{name:app.vm.d.p.name,title:app.vm.d.p.title,id:app.vm.d.p.data&&app.vm.d.p.data.id,back:app.vm.d.p.data&&app.vm.d.p.data.back}}
+ const data={id:id,back:{name:app.vm.d.p.name,title:app.vm.d.p.title,data:app.vm.d.p.data}}
  if(values)for(key in values)data[key]=values[key]
  app.showPage(name,data)
 }
 
-app.showSuperPage=()=>{
+app.showSuperPage=x=>{
  if(!app.vm.d.p.data||!app.vm.d.p.data.back)app.showPage()
- app.showPage(app.vm.d.p.data.back.name,{id:app.vm.d.p.data.back.id,back:app.vm.d.p.data.back.back})
+ app.showPage(app.vm.d.p.data.back.name,app.vm.d.p.data.back.data)
 }
 
-app.pageServerDataStack=[]
-
-app.showPageServerData=(mode,key)=>{
- //app.log('app.showPageServerData('+mode+','+key+')')
- let data=null
- if(mode==-1&&app.pageServerDataStack.length)data=app.pageServerDataStack.pop()
- else if(mode==1){
-  app.pageServerDataStack.push(app.vm.d.p.data)
-  const title=Array.isArray(app.vm.d.p.data[0])?(app.vm.d.p.data[0][key].n||(app.vm.d.p.data[2]+'['+key+']')):key
-  const spath=Array.isArray(app.vm.d.p.data[0])?('['+key+']'):('/'+key)
-  data=[app.vm.d.p.data[0][key],title,app.vm.d.p.data[2]+spath,app.vm.d.p.data[1]]
- }else{
-  app.pageServerDataStack=[]
-  data=[app.vm.d.a.data.lst,'root','',tr('Current state')]
- }
- app.showPage('serverdata',data)
+app.showPageServerData=key=>{
+ if(app.vm.d.p.name!='serverdata')return app.showSubPage('serverdata',null,{node:app.vm.d.a.data.lst,title:'root',path:'/'})
+ const node=app.vm.d.p.data.node[key]
+ const title=Array.isArray(app.vm.d.p.data.node)?(node.n||(app.vm.d.p.data.path+'['+key+']')):key
+ const path=app.vm.d.p.data.path+(Array.isArray(app.vm.d.p.data.node)?('['+key+']'):(app.vm.d.p.data.path=='/'?key:('/'+key)))
+ app.showSubPage('serverdata',null,{node:node,title:title,path:path})
 }
 
 app.query=(request,caption,resolve)=>{
@@ -321,12 +311,12 @@ app.setDocType=id=>{
 }
 
 app.orderNextDate=x=>{
- app.vm.d.p.data.date=app.vm.txtD(app.vm.nextD(app.vm.d.p.data.D))
+ app.vm.d.p.data.date=app.vm.txtD(app.vm.nextD(app.vm.d.t.D))
  app.vm.$forceUpdate()
 }
 
 app.orderPrevDate=x=>{
- app.vm.d.p.data.date=app.vm.txtD(app.vm.prevD(app.vm.d.p.data.D))
+ app.vm.d.p.data.date=app.vm.txtD(app.vm.prevD(app.vm.d.t.D))
  app.vm.$forceUpdate()
 }
 
