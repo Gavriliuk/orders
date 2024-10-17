@@ -7,25 +7,19 @@ body {opacity:1;transition:opacity 1s}
 --color-blue:#08f;--color-light-blue:#2af;
 --color-red:#e44;--color-light-red:#f66;
 --color-bg:#ffe;--color-fg:#004;
---color-head:#e49444;--color-ctrl:#26a69a;
---color-accent:#a00;--color-accent2:#e00;
+--color-head:#d84;--color-ctrl:#26a69a;
+--color-accent:#a40;--color-accent2:#e40;
 }
 
 /* implicit colors */
 :root {
-/*--color-main-bg:var(--color-bg);
---color-main-fg:var(--color-fg);*/
 --color-navi-bg:var(--color-ctrl);
 --color-navi-fg:var(--color-white);
 --color-head-bg:var(--color-head);
 --color-head-fg:var(--color-white);
 --color-item-bg:var(--color-white);
 --color-item-fg:var(--color-black);
---color-href-fg:var(--color-ctrl); /*#06a*/
-/*--color-btn-bg:#06a;
---color-btn-fg:#fff;
---color-btn-hover-bg:#0ad;
---color-btn-focus-bg:#a00;*/
+--color-href-fg:var(--color-ctrl);
 }
 
 body
@@ -39,7 +33,6 @@ body
 {background-color:var(--color-navi-bg);color:var(--color-navi-fg)}
 
 nav {background-color:inherit}
-/*nav ul a {font-size:inherit}*/
 
 a {color:var(--color-ctrl)}
 
@@ -55,13 +48,6 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 {background-color:var(--color-item-bg);color:var(--color-item-fg)}
 .collection a.collection-item
 {background-color:var(--color-item-bg);color:var(--color-href-fg)}
-
-/*.btn, .btn-large, .btn-small, .btn-like
-{background-color:var(--color-btn-bg);color:var(--color-btn-fg)}
-.btn:hover, .btn-large:hover, .btn-small:hover
-{background-color:var(--color-btn-hover-bg)}
-.btn:focus, .btn-large:focus, .btn-small:focus
-{background-color:var(--color-btn-focus-bg)}*/
 
 /* radius */
 :root {
@@ -90,7 +76,7 @@ a.js[onclick]:hover {text-decoration:underline}
 a[role=button] {cursor:pointer;transition:color 0.3s}
 a[role=button]:hover {color:crimson}
 
-.btn/*, .Xbtn-large, .btn-small, .btn-like*/
+.btn
 {border-radius:var(--button-radius)}
 
 
