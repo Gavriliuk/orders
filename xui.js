@@ -229,7 +229,9 @@ app.showPageServerData=key=>{
 app.query=(request,caption,resolve)=>{
  const controller=new AbortController()
  const timeout=AbortSignal.timeout(app.vm.timeout()*1000);
- const uri='api/s?r='+encodeURIComponent(JSON.stringify(request))
+ const uri='api/s'
+ const body=new FormData()
+ body.set('r',JSON.stringify(request))
  app.vm.d.m.query.caption=tr(caption)
  app.vm.d.m.query.status=tr('Connection is in progress')
  app.vm.d.m.query.time=0
@@ -243,7 +245,7 @@ app.query=(request,caption,resolve)=>{
  }
  modal.open()
  const signal=AbortSignal.any?AbortSignal.any([controller.signal,timeout]):controller.signal
- fetch(uri,{referrer:'',referrerPolicy:'no-referrer',signal:signal}).then(response=>{
+ fetch(uri,{method:'POST',body:body,referrer:'',referrerPolicy:'no-referrer',signal:signal}).then(response=>{
   clearInterval(interval)
   if(!response.ok)throw Error('Not OK. '+response.status)
   return response.json()
@@ -288,13 +290,15 @@ app.dbRefresh=x=>{
 }
 
 app.dbExport=x=>{
- const orders=app.vm.d.a.data.doc.filter(d=>!d.nrdoc&&d.ready)
+ const orders=app.vm.d.a.data.doc.filter(d=>!d.nr&&d.ready)
  if(!orders.length)return app.error(tr('No orders ready to export'))
- const docs=orders.map(d=>({id:d.id,type:d.type,date:d.date,p:structuredClone(d.p)}))
- const request={cmd:'dbexport',usr:app.username,pwd:app.password,session:app.vm.session(),docs:docs}
+ const doc=orders.map(d=>({id:d.id,pt:d.pt,tp:d.tp,dt:d.dt,p:structuredClone(d.p)}))
+ const request={cmd:'dbexport',usr:app.username,pwd:app.password,session:app.vm.session(),doc:doc}
  app.query(request,'Export orders',data=>{
   app.vm.session(data.session)
-  if(data.docs&&Array.isArray(data.docs))data.docs.forEach(d=>{
+  if(data.doc&&Array.isArray(data.doc))data.doc.forEach(d=>{
+   const o=app.vm.d.a.data.doc.find(o=>o.id==d.id)
+   if(o)for(key in d)o[key]=d[key]
   })
   app.backup('doc')
  })
@@ -308,7 +312,7 @@ app.newOrder=x=>{
 app.showOrder=id=>{
  const doc=app.vm.d.a.data.doc.find(d=>d.id==id)
  if(!doc)return app.error('Order '+id+' not found')
- const data={punct:doc.punct,date:doc.date,type:doc.type,products:structuredClone(doc.p)}
+ const data={punct:doc.pt,date:doc.dt,type:doc.tp,products:structuredClone(doc.p)}
  if(doc.ready)data.ready=true
  app.showSubPage('order',id,data)
 }
@@ -374,8 +378,8 @@ app.createOrder=close=>{
  const type=app.vm.d.p.data.type
  let id=1
  app.vm.d.a.data.doc.forEach(d=>{if(d.id>=id)id=d.id+1})
- const doc={id:id,punct:punct,date:date}
- if(type)doc.type=type
+ const doc={id:id,pt:punct,dt:date}
+ if(type)doc.tp=type
  if(app.vm.d.p.data.ready)doc.ready=true
  doc.p=structuredClone(app.vm.d.p.data.products)
  app.vm.d.a.data.doc.push(doc)
@@ -389,8 +393,8 @@ app.saveOrder=close=>{
  if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
  const doc=app.vm.d.a.data.doc.find(o=>o.id==app.vm.d.p.data.id)
  if(!doc)return app.error('Order '+app.vm.d.p.data.id+' not found')
- if(doc.date!=app.vm.d.p.data.date)doc.date=app.vm.d.p.data.date
- if(doc.type!=app.vm.d.p.data.type)doc.type=app.vm.d.p.data.type
+ if(doc.dt!=app.vm.d.p.data.date)doc.dt=app.vm.d.p.data.date
+ if(doc.tp!=app.vm.d.p.data.type)doc.tp=app.vm.d.p.data.type
  if(app.vm.d.p.data.ready&&!doc.ready)doc.ready=true
  else if(doc.ready&&!app.vm.d.p.data.ready)delete doc.ready
  doc.p=structuredClone(app.vm.d.p.data.products)

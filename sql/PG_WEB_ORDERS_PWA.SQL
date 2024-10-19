@@ -1,6 +1,6 @@
 CREATE OR REPLACE package pg_web_orders_pwa authid current_user as
 --------------------------------------------------------------------------------
--- Last modification date: 03.09.24
+-- Last modification date: 20.10.24
 --------------------------------------------------------------------------------
 procedure local_service(p_request varchar2:=null);
 procedure remote_service(p_path varchar2,p_proc varchar2,p_param varchar2,p_request varchar2,p_response in out pg_web_base.t_response);
@@ -13,7 +13,7 @@ end;
 
 CREATE OR REPLACE package body pg_web_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 03.09.24
+-- Last modification date: 20.10.24
 --------------------------------------------------------------------------------
 -- HTTP Respond
 -- Input:
@@ -171,7 +171,7 @@ exception when others then
  http_respond(v_log_id,
    '{'||chr(10)||
    ' "cmd":"'||v_command||'"'||chr(10)||
-   ',"error":"'||sqlerrm||'"'||chr(10)||
+   ',"error":"'||replace(replace(convert(sqlerrm,'AL32UTF8','CL8MSWIN1251'),'"','\"'),chr(10),'\n')||'"'||chr(10)||
    ',"trace":['||chr(10)||
    '  "'||replace(replace(rtrim(v_converted,chr(10)),'"','\"'),chr(10),'"'||chr(10)||' ,"')||'"'||chr(10)||
    ' ]'||chr(10)||
