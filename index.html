@@ -306,8 +306,9 @@
 
 <div v-if="d.p.name=='serverdata'" id="page-serverdata">
 <div class="collection with-header flow-text no-select"
- :js1="(d.t.a=Array.isArray(d.p.data.node))?null:null"
- :js2="(d.t.A=d.t.a?d.p.data.node:Object.keys(d.p.data.node))&&null">
+ :js1="(d.t.N=d.p.data.node||d.a.data.lst)?null:null"
+ :js2="(d.t.a=Array.isArray(d.t.N))?null:null"
+ :js3="(d.t.A=d.t.a?d.t.N:Object.keys(d.t.N))&&null">
 <div class="collection-header caption">
  <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{oval(d.p.data.back.data,'title')||oval(d.p.data.back,'title')}}</a>
  <div class="left">{{d.p.data.path}}</div>
@@ -317,12 +318,12 @@
  <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}} <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></span>
 </div>
 <a v-for="(n,i) in d.t.A" class="collection-item"
- :js1="(d.t.n=d.p.data.node[n])&&null||null"
+ :js1="(d.t.n=d.t.N[n])&&null||null"
  :js2="(d.t.l=d.t.a?(n&&(typeof n=='object')):(d.t.n&&(typeof d.t.n=='object')))&&null||null"
  :class="d.t.l?'js':null"
  :onclick="d.t.l?('app.showPageServerData('+(d.t.a?i:'\''+n+'\'')+')'):null">
  {{d.t.a?(n&&n.i&&n.n?(n.i+':'):''):(n+':')}}
- <span class="right">{{d.t.a?(n.n||n):Array.isArray(d.t.n)?('['+d.t.n.length+']'):(d.t.n&&d.t.n.n||d.t.n)}}</span>
+ <span :class="n&&n.i&&n.n&&'right'">{{d.t.a?(n.n||n):Array.isArray(d.t.n)?('['+d.t.n.length+']'):(d.t.n&&d.t.n.n||d.t.n)}}</span>
 </a>
 <div v-if="!d.t.A.length" class="collection-item center">{{tr('No data')}}</div>
 </div>

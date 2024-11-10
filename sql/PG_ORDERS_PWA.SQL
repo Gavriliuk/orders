@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 20.10.24
+-- Last modification date: 10.11.24
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -12,19 +12,24 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 20.10.24
+-- Last modification date: 10.11.24
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
 --------------------------------------------------------------------------------
-procedure clear_log is
- pragma autonomous_transaction;
+procedure start_log(p_text varchar2)is
+ procedure start_int is
+  pragma autonomous_transaction;
+ begin
+  delete from xdblog where dt<trunc(sysdate);
+  commit;
+ end;
 begin
- delete from xdblog where dt<trunc(sysdate);
- commit;
+ dbms_output.put_line(current_timestamp||' '||p_text);
+ --start_int;
 end;
 --------------------------------------------------------------------------------
-procedure write_log(p_text varchar2)is
+procedure write_log(p_start date,p_text varchar2)is
  procedure write_int(p_time date)is
   pragma autonomous_transaction;
  begin
@@ -32,37 +37,37 @@ procedure write_log(p_text varchar2)is
   commit;
  end;
 begin
- dbms_output.put_line(current_timestamp||' '||p_text);
- write_int(sysdate);
+ dbms_output.put_line(lpad(round((sysdate-p_start)*86400),3)||' '||p_text);
+ --write_int(sysdate);
 end;
 --------------------------------------------------------------------------------
 -- Store response blocks
 --------------------------------------------------------------------------------
-procedure prepare_debitori is
+procedure prepare_debitori(p_start date)is
  --
  vdata date:=trunc(sysdate);
  --
  v_user_id int;
  v_agent_id int;
- c_day1 constant int:=7;
- c_day2 constant int:=14;
- c_day3 constant int:=21;
- c_day4 constant int:=28;
- v_client int;
- vDataost DATE;
+ --c_day1 constant int:=7;
+ --c_day2 constant int:=14;
+ --c_day3 constant int:=21;
+ --c_day4 constant int:=28;
+ v_sold_date DATE;
  v_sld number(20,3):=0;
 
  procedure clear_for_user is
-  --pragma autonomous_transaction;
  begin
   delete from yrb_debtitori where user_id=v_user_id;
   delete from yrb_debtitori_detail where user_id=v_user_id;
   delete from xsldx;
-  --commit;
+  delete from xsld;
+  delete from trgb_badolg;
+  delete from ba_dolg;
  end;
  --
 begin
- --write_log('prepare_debitori 1');
+ write_log(p_start,'prepare_debitori begin');
  v_user_id:=sys_context('envun4','param_userid');
  --
  if v_user_id is null then
@@ -76,118 +81,124 @@ begin
  end;
  --
  clear_for_user;
- --write_log('prepare_debitori 2');
  --
- DELETE FROM xsld;
- DELETE FROM trgb_badolg;
- DELETE FROM ba_dolg;
- --write_log('prepare_debitori 3');
- --
- insert into xsld(id,dep)
+ insert into xsld (id,dep)
  select 'ruta',id_ruta from vms_order_route_agents where id_agent=v_agent_id and main_agent='P';
- --write_log('prepare_debitori 3a');
- insert into xsld(id,dep)
- select 'client',cod from vms_order_clients_gr where id_ruta in(select dep from xsld where id='ruta');
- --write_log('prepare_debitori 3b');
- --un$sld.make(vdata,'4','ADE',pCont=>'221 52 544 5393',pdep=>'select cod from VMS_ORDER_CLIENTS_GR where id_ruta in(select id_ruta from vms_order_route_agents where id_agent='||v_agent_id||' and main_agent=''P'')',pNrCM=>'201');
- un$sld.make(vdata,'4','ADE',pCont=>'221 52 544 5393',pdep=>'select dep from xsld where id=''client''',pNrCM=>'201');
- --write_log('prepare_debitori 4'); -- 2 min. => 15 sec.
- --un$sld.make(vdata,'7','AD',pCont=>'221 52 544 5393',pdep=>'select cod from VMS_ORDER_CLIENTS_GR where id_ruta in(select id_ruta from vms_order_route_agents where id_agent='||v_agent_id||' and main_agent=''P'')',pNrCM=>'201');
- un$sld.make(vdata,'7','AD',pCont=>'221 52 544 5393',pdep=>'select dep from xsld where id=''client''',pNrCM=>'201');
- --write_log('prepare_debitori 5'); -- 2 min. => 15 sec.
+ --write_log(p_start,'prepare_debitori 2');
  --
- insert into xsld(id,dep,sc1,cont,cant,suma)
+ insert into xsld (id,dep)
+ select 'client',cod from vms_order_clients_gr where id_ruta in(select dep from xsld where id='ruta');
+ write_log(p_start,'prepare_debitori 3');
+ --
+ un$sld.make(vdata,'4','ADE',pCont=>'221 52 544 5393',pdep=>'select dep from xsld where id=''client''',pNrCM=>'201');
+ write_log(p_start,'prepare_debitori 4'); -- 2 min. => 15 sec.
+ --
+ un$sld.make(vdata,'7','AD',pCont=>'221 52 544 5393',pdep=>'select dep from xsld where id=''client''',pNrCM=>'201');
+ write_log(p_start,'prepare_debitori 5'); -- 2 min. => 15 sec.
+ --
+ insert into xsld (id,dep,sc1,cont,cant,suma)
  select '5',x.dep,x.sc1,d.cont,m.tip,x.suma
  from xsld x,ytms_setare_debitoriD d,ytms_setare_debitoriM m
  where x.id='4' and x.dep=m.dep and x.cont=d.cont and d.dep=m.dep;
- --write_log('prepare_debitori 6');
+ --write_log(p_start,'prepare_debitori 6');
  --
  update xsld set sc1=0 where id='5' and cant=1;
- --write_log('prepare_debitori 7');
+ --write_log(p_start,'prepare_debitori 7');
  --
- delete xsld x where x.id='4' and x.dep in (select distinct y.dep from xsld y where y.id='5');
- --write_log('prepare_debitori 8');
+ delete xsld x where x.id='4' and x.dep in (select y.dep from xsld y where y.id='5');
+ --write_log(p_start,'prepare_debitori 8');
  delete xsld x where x.id='4' and x.cont not in (2211,2214,5231);
- --write_log('prepare_debitori 9');
+ --write_log(p_start,'prepare_debitori 9');
  --
  update xsld set sc1=0 where id='4';
- --write_log('prepare_debitori 10');
+ --write_log(p_start,'prepare_debitori 10');
  --
- insert into xsld(id,cont,dep,sc1,suma)
+ insert into xsld (id,cont,dep,sc1,suma)
  select '4',x.cont,x.dep,x.sc1,x.suma from xsld x where x.id='5';
- --write_log('prepare_debitori 11');
+ --write_log(p_start,'prepare_debitori 11');
  --
- insert into xsld(id,dep,sc1,suma)
+ insert into xsld (id,dep,sc1,suma)
  select '1', a.dep,a.sc1,a.suma
- from (
+ from
+ (
   select x.dep,x.sc1,sum(x.suma)suma
   from xsld x
   where id='4'
   group by x.dep,x.sc1
  ) a where a.suma>0;
- --write_log('prepare_debitori 12');
+ --write_log(p_start,'prepare_debitori 12');
  -- inseram numarul de zile(otsrochka)
- UPDATE xsld x SET div=(
-  SELECT DISTINCT  zile_schema_deplata
-  FROM (
-   SELECT zile_schema_deplata,null zile_schema_deplata1,clientid
-   FROM VCN0M_CONTRACTS_EXT M
-   WHERE vdata BETWEEN M.datastart AND M.dataend
-   AND M.contractid IN (SELECT cod FROM VMDB_DOCS WHERE sysfid=48355)
-  ) A
-  WHERE A.clientid=x.dep
+ update xsld x set div=
+ (
+  select distinct zile_schema_deplata
+  from
+  (
+   select zile_schema_deplata,null zile_schema_deplata1,clientid
+   from vcn0m_contracts_ext m
+   where vdata between m.datastart and m.dataend
+   and m.contractid in (select cod from vmdb_docs where sysfid=48355)
+  ) a
+  where a.clientid=x.dep
  )
- WHERE ID='1';     
- --write_log('prepare_debitori 13');
+ where id='1';     
+ --write_log(p_start,'prepare_debitori 13');
  --i6em datu poslednei registratsii ostatkob
- SELECT NVL((SELECT MAX(dataend) FROM TMDB_DSLD WHERE cod=1/*dataend<=vdata*/),to_date('31.12.2018','dd.mm.yyyy')) INTO vDataost FROM dual;
- --write_log('prepare_debitori 14');
+ select nvl((select max(dataend) from tmdb_dsld where cod=1/*dataend<=vdata*/),to_date('31.12.2018','dd.mm.yyyy')) into v_sold_date from dual;
+ write_log(p_start,'prepare_debitori 14');
  --
- INSERT INTO trgb_badolg(dtdep,dtsc1,data,nrdoc,sumadt)
+ insert into trgb_badolg(dtdep,dtsc1,data,nrdoc,sumadt)
  select dtdep,dtsc1,data,nrdoc,sumadt
- from (
+ from
+ (
    Select dtdep,dtsc1,data,nrdoc,sumadt
-   from (
+   from
+   (
      --
-     Select dtdep,dtsc1,data,nrdoc,sumadt
-     from (
-       SELECT dtdep,dtsc1,DATA,nrdoc,SUM(suma_dt)sumadt
-       ,(SELECT NVL(sum(suma),0) FROM xsld WHERE ID='1' AND dep=dtdep)sld
-       FROM (
+     select dtdep,dtsc1,data,nrdoc,sumadt
+     from
+     (
+       select dtdep,dtsc1,data,nrdoc,sum(suma_dt)sumadt
+        ,(select nvl(sum(suma),0) from xsld where id='1' and dep=dtdep)sld
+       from
+       (
          select *
-         from (
-           SELECT c.dtdep,c.dtsc1,c.DATA,c.nrdoc,c.cod,SUM(c.suma)suma_dt
-           FROM tmdb_cm c
-           WHERE c.dt IN (2211,2214)
-             AND c.ct IN (6111,6113,6121,6112,5342,6118,6119)
+         from
+         (
+           select c.dtdep,c.dtsc1,c.data,c.nrdoc,c.cod,sum(c.suma)suma_dt
+           from tmdb_cm c
+           where c.dt in (2211,2214)
+             and c.ct in (6111,6113,6121,6112,5342,6118,6119)
              and c.isvalid is null
-             and c.sptype = 0
-             AND c.DATA BETWEEN  vDataost+1 AND vdata
-           GROUP BY c.dtdep,c.dtsc1,c.DATA,c.nrdoc,c.cod
+             and c.sptype=0
+             and c.data between v_sold_date+1 and vdata
+           group by c.dtdep,c.dtsc1,c.data,c.nrdoc,c.cod
          ) tt
-         where tt.dtdep in (SELECT dep FROM xsld x2 WHERE x2.ID='1')
-         --ORDER BY tt.dtdep, tt.dtsc1
+         where tt.dtdep in (select dep from xsld where id='1')
+         --order by tt.dtdep, tt.dtsc1
        )
-       GROUP BY dtdep,dtsc1,DATA,nrdoc
+       group by dtdep,dtsc1,data,nrdoc
      )
-     WHERE sld>=0 and sumadt>0
+     where sld>=0 and sumadt>0
      --
      union
      --
-     Select dtdep,dtsc1,data,nrdoc,sumadt
-     from (
-       SELECT dtdep,dtsc1,DATA,nrdoc,SUM(suma_dt)sumadt,0 sld
-       FROM (
-         SELECT c.dtdep,c.dtsc1,c.DATA,c.nrdoc,c.cod,SUM(c.suma)suma_dt
-         FROM market_db_cmr c
-         WHERE c.dt IN (2211,2214) AND c.ct IN (6111,6113,6121,6112,5342,6118)
-           AND c.DATA BETWEEN TO_DATE('31.12.2012')+1 AND TO_DATE('31.12.2014')
-           AND c.dtdep IN (SELECT dep FROM xsld WHERE ID='1')
+     select dtdep,dtsc1,data,nrdoc,sumadt
+     from
+     (
+       select dtdep,dtsc1,data,nrdoc,sum(suma_dt)sumadt,0 sld
+       from
+       (
+         select c.dtdep,c.dtsc1,c.data,c.nrdoc,c.cod,sum(c.suma)suma_dt
+         from market_db_cmr c
+         where c.dt in (2211,2214) and c.ct in (6111,6113,6121,6112,5342,6118)
+           and c.data between to_date('31.12.2012')+1 and to_date('31.12.2014')
+           and c.dtdep in (select dep from xsld where id='1')
            and dtnrcm in (select id from xnrset)
-         GROUP BY c.dtdep, c.dtsc1,c.DATA, c.nrdoc, c.cod ORDER BY c.dtdep, c.dtsc1
+         group by c.dtdep,c.dtsc1,c.data,c.nrdoc,c.cod
+         --order by c.dtdep,c.dtsc1
        )
-       GROUP BY  dtdep, dtsc1, DATA, nrdoc
-     ) WHERE sumadt>0
+       group by dtdep,dtsc1,data,nrdoc
+     ) where sumadt>0
      --
      union
      --
@@ -195,90 +206,100 @@ begin
    )
    --ORDER BY dtdep,DATA desc,nrdoc,dtsc1
  );
- --write_log('prepare_debitori 15'); -- 12 sec.
+ write_log(p_start,'prepare_debitori 15'); -- 12 sec.
  ------------ cautarea facturilor care vor acoperi soldul total pe client
- For k in (select dep,sc1,suma from xsld where id='1' )
+ for k in (select dep,sc1,suma from xsld where id='1')
  loop
   v_sld:=k.suma;
   --rashityvaem dolg i kidaem v tablicy
-  FOR i IN ( SELECT * FROM trgb_badolg  where dtdep=k.dep and decode(k.sc1,0,k.sc1,dtsc1)=k.sc1 ORDER BY   DATA desc, nrdoc desc)
-  LOOP
-   If v_sld-i.sumadt>0 then
-    INSERT INTO ba_dolg VALUES(i.dtdep, i.dtsc1, i.DATA, i.nrdoc,i.sumadt,201);
+  for i in
+  (
+   select *
+   from trgb_badolg
+   where dtdep=k.dep and decode(k.sc1,0,k.sc1,dtsc1)=k.sc1
+   order by data desc,nrdoc desc
+  )
+  loop
+   if v_sld-i.sumadt>0 then
+    insert into ba_dolg values (i.dtdep,i.dtsc1,i.data,i.nrdoc,i.sumadt,201);
    end if;
    --
-   If v_sld-i.sumadt<=0 then
-    INSERT INTO ba_dolg VALUES(i.dtdep, i.dtsc1, i.DATA, i.nrdoc,v_sld,201);
+   if v_sld-i.sumadt<=0 then
+    insert into ba_dolg values (i.dtdep,i.dtsc1,i.data,i.nrdoc,v_sld,201);
     exit;
    end if;
+   --
    v_sld:=v_sld-i.sumadt;
   end loop;
- END LOOP;
- --write_log('prepare_debitori 16');
+ end loop;
+ --write_log(p_start,'prepare_debitori 16');
  --
- INSERT INTO xsld (ID,cont,dep,sc1,nrdoc,DATA,suma,div)
- SELECT  'doc' ID, 2211 cont, dtdep, dtsc1, nrdoc, DATA, dolg,
-   (
-     SELECT zile_schema_deplata
-     FROM VCN0M_CONTRACTS_EXT M
-     WHERE TO_DATE(vdata) BETWEEN M.datastart AND M.dataend
-       AND M.clientid=b.dtdep AND M.contractid IN(SELECT cod FROM VMDB_DOCS WHERE sysfid=48355)
-   ) dni_otsrochki
- FROM ba_dolg b
- WHERE b.dolg!=0;
- --write_log('prepare_debitori 17');
+ insert into xsld (id,cont,dep,sc1,nrdoc,data,suma,div)
+ select 'doc',2211,dtdep,dtsc1,nrdoc,data,dolg,
+  (
+   select zile_schema_deplata
+   from vcn0m_contracts_ext m
+   where to_date(vdata) between m.datastart and m.dataend
+     and m.clientid=b.dtdep and m.contractid in (select cod from vmdb_docs where sysfid=48355)
+  ) dni_otsrochki
+ from ba_dolg b
+ where b.dolg<>0;
+ --write_log(p_start,'prepare_debitori 17');
  --
- UPDATE xsld
- SET cant=(CASE WHEN to_date( trunc(sysdate))-data-nvl(div,0) between 1 and c_day1  THEN suma ELSE null END)
-   ,price=(CASE WHEN to_date( trunc(sysdate))-data-nvl(div,0)  between c_day1+1 and c_day2  THEN suma ELSE null END)
-   ,sumaval=(CASE WHEN to_date(trunc(sysdate))-data-nvl(div,0) between c_day2+1 and c_day3 THEN suma ELSE null END)
-   ,sumagaap=(CASE WHEN to_date(trunc(sysdate))-data-nvl(div,0) between c_day3+1 and c_day4 THEN suma ELSE null END)
-   ,cant1=(CASE WHEN to_date(trunc(sysdate))-data-nvl(div,0)>c_day4 THEN suma ELSE null END)
- WHERE ID='doc';
- --write_log('prepare_debitori 18');
+ update xsld set nrcm=to_date(trunc(sysdate))-data-nvl(div,0) where id='doc';
+ update xsld set cant    =suma where id='doc' and nrcm between 1 and 7;
+ update xsld set price   =suma where id='doc' and nrcm between 8 and 14;
+ update xsld set sumaval =suma where id='doc' and nrcm between 15 and 21;
+ update xsld set sumagaap=suma where id='doc' and nrcm between 22 and 28;
+ update xsld set cant1   =suma where id='doc' and nrcm>28;
+ --write_log(p_start,'prepare_debitori 18');
  --
- insert into yrb_debtitori (id_client,id_punct,TOTAL,suma35,suma28,suma21,suma14,suma7,TOT_PLATA,TOTAL_DAT,ZILE,user_id)
- SELECT CLIENT, PUNCT, sum(TOTAL), sum(SUMA35), sum(SUMA28), sum(SUMA21), sum(SUMA14), sum(SUMA7), sum(TOT_PLATA), sum(TOT_PLATA)+sum(TOTAL)
-   ,nvl((SELECT div FROM xsld c WHERE c.id='doc' and c.dep=a.client/* and c.sc1=a.punct*/   AND ROWNUM=1),14),v_user_id  
- from (
-   select sc0 CLIENT,sc1 PUNCT, 
-     sum( nvl(sum1,0))+sum(nvl(sum2,0))+sum(nvl(sum3,0))+sum(nvl(sum4,0))+sum(nvl(sum5,0)) TOTAL,
-     -- (SELECT SUM(suma) FROM vsld4 v  WHERE v.dep=x.sc0)  TOTAL,
-     SUM(NVL(sum0,0))-SUM(NVL(sum1,0))-SUM(NVL(sum2,0))-SUM(NVL(sum3,0))-SUM(NVL(sum4,0))-SUM(NVL(sum5,0)) TOT_PLATA,
-     sum( nvl(sum5,0)) SUMA35,
-     sum( nvl(sum4,0)) SUMA28,
-     sum( nvl(sum3,0)) SUMA21,
-     sum( nvl(sum2,0)) SUMA14,
-     sum( nvl(sum1,0)) SUMA7,
-     sum(cant0) zile
- from (          
-   SELECT dep sc0,0 sc1,sum(suma) sum0,SUM(cant) sum1,SUM(price) sum2,SUM(sumaval) sum3,SUM(sumagaap) sum4,SUM(cant1) sum5, null cant0
-   FROM xsld
-   WHERE ID='doc'
-   GROUP BY cont,dep           
- ) x 
- GROUP BY sc0,sc1) a
+ insert into yrb_debtitori (id_client,id_punct,total,suma35,suma28,suma21,suma14,suma7,tot_plata,total_dat,zile,user_id)
+ select client, punct, sum(total), sum(suma35), sum(suma28), sum(suma21), sum(suma14), sum(suma7), sum(tot_plata), sum(tot_plata)+sum(total)
+  ,nvl((select div from xsld c where c.id='doc' and c.dep=a.client/* and c.sc1=a.punct*/   and rownum=1),14),v_user_id  
+ from
+ (
+  select sc0 client,sc1 punct 
+   ,sum( nvl(sum1,0))+sum(nvl(sum2,0))+sum(nvl(sum3,0))+sum(nvl(sum4,0))+sum(nvl(sum5,0)) total
+   ,sum(nvl(sum0,0))-sum(nvl(sum1,0))-sum(nvl(sum2,0))-sum(nvl(sum3,0))-sum(nvl(sum4,0))-sum(nvl(sum5,0)) tot_plata
+   ,sum(nvl(sum5,0)) suma35
+   ,sum(nvl(sum4,0)) suma28
+   ,sum(nvl(sum3,0)) suma21
+   ,sum(nvl(sum2,0)) suma14
+   ,sum(nvl(sum1,0)) suma7
+   ,sum(cant0) zile
+  from
+  (
+   select dep sc0,0 sc1,sum(suma) sum0,sum(cant) sum1,sum(price) sum2,sum(sumaval) sum3,sum(sumagaap) sum4,sum(cant1) sum5,null cant0
+   from xsld
+   where id='doc'
+   group by /*cont,*/dep
+  ) x 
+  group by sc0,sc1
+ ) a
  --where nvl(TOTAL,0)>0            
- GROUP BY Client, punct; 
- --write_log('prepare_debitori 19');
+ group by client,punct;
+ --write_log(p_start,'prepare_debitori 19');
  --
- insert into yrb_debtitori_detail (CLIENT,ID_PUNCT,NRDOC,DOC_NAME,DATA,NRMANUAL,CONT,DOC_S7,DOC_S14,DOC_S21,DOC_S28,DOC_S35,SUM_PLATA,SUM_DAT_EXP,SUM_TOT_DOC,user_id)
- select dep,sc1, nrdoc, case when cont=2211 and nrdoc is not null then 'Factura'  else 'Sold' end DOC_NAME ,data, nrmanual, cont, doc1_1, doc2_1, doc3_1, doc4_1, doc5_1,doc0_1,
-   sum_dat_exp, NVL(sum_dat_exp,0)+NVL(doc0_1,0),v_user_id
- from (
-   SELECT dep, sc1, nrdoc,TRUNC(DATA) DATA,(SELECT nrmanual FROM TMDB_DOCS WHERE cod=x.nrdoc) nrmanual
-     ,to_number(cont) cont
-     ,(select suma from XSLD S where nvl(S.nrdoc,0)=nvl(x.nrdoc,0) and S.dep=x.dep and S.sc1=x.sc1 AND S.CONT=2211 AND ID='SUMADT')  suma_fact
-     ,cant doc1_1, price doc2_1, sumaval doc3_1, sumagaap doc4_1, cant1 doc5_1, nvl(suma,0)-nvl(cant,0)-nvl(price,0)-nvl(sumaval,0)-nvl(sumagaap,0)-nvl(cant1,0) as doc0_1 
-     ,NVL(cant,0)+NVL(price,0)+NVL(sumaval,0)+NVL(sumagaap,0)+NVL(cant1,0) sum_dat_exp
-   FROM xsld x
-   WHERE ID='doc'
-   ORDER BY DATA desc,nrdoc desc
- )a; 
+ insert into yrb_debtitori_detail (client,id_punct,nrdoc,doc_name,data,nrmanual,cont,doc_s7,doc_s14,doc_s21,doc_s28,doc_s35,sum_plata,sum_dat_exp,sum_tot_doc,user_id)
+ select dep,sc1,nrdoc,case when cont=2211 and nrdoc is not null then 'Factura' else 'Sold' end doc_name
+  ,data,nrmanual,cont,doc1_1,doc2_1,doc3_1,doc4_1,doc5_1,doc0_1,sum_dat_exp,nvl(sum_dat_exp,0)+nvl(doc0_1,0),v_user_id
+ from
+ (
+  select dep,sc1,nrdoc,trunc(data) data,(select nrmanual from tmdb_docs where cod=x.nrdoc) nrmanual
+   ,to_number(cont) cont
+   ,(select suma from xsld s where nvl(s.nrdoc,0)=nvl(x.nrdoc,0) and s.dep=x.dep and s.sc1=x.sc1 and s.cont=2211 and id='SUMADT') suma_fact
+   ,cant doc1_1,price doc2_1,sumaval doc3_1,sumagaap doc4_1,cant1 doc5_1,nvl(suma,0)-nvl(cant,0)-nvl(price,0)-nvl(sumaval,0)-nvl(sumagaap,0)-nvl(cant1,0) as doc0_1 
+   ,nvl(cant,0)+nvl(price,0)+nvl(sumaval,0)+nvl(sumagaap,0)+nvl(cant1,0) sum_dat_exp
+  from xsld x
+  where id='doc'
+  order by data desc,nrdoc desc
+ )a;
  --
+ write_log(p_start,'prepare_debitori done');
 end;
 --------------------------------------------------------------------------------
-procedure prepare_sld is
+procedure prepare_sld(p_start date)is
  --
  procedure prepare_sld_puncts is
   v_user_id int;
@@ -299,7 +320,7 @@ procedure prepare_sld is
   where id_agent=v_agent_id and trunc(sysdate)<datae+31;
   --
   insert into xsld (id,sc,dep)
-  select 'p',id_ruta,cod from VMS_ORDER_CLIENTS_GR
+  select 'p',id_ruta,cod from vms_order_clients_gr
   where  id_ruta is not null and id_ruta in(select id_ruta from vms_order_route_agents where id_agent=v_agent_id and main_agent='P' );
  end;
  --
@@ -330,10 +351,11 @@ procedure prepare_sld is
  end;
  --
 begin
+ write_log(p_start,'prepare_sld begin');
  prepare_sld_puncts;
- --write_log('prepare_sld_puncts');
+ write_log(p_start,'prepare_sld_puncts done');
  prepare_sld_turnover;
- --write_log('prepare_sld_turnover');
+ write_log(p_start,'prepare_sld_turnover done');
 end;
 --------------------------------------------------------------------------------
 /*procedure prepare_debitori is
@@ -364,7 +386,7 @@ begin
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_markets');
+ --write_log(p_start,'store_markets');
 end;
 --------------------------------------------------------------------------------
 procedure store_cities(p_state in out nocopy web_json.t_fill_state) is
@@ -383,7 +405,7 @@ begin
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_cities');
+ --write_log(p_start,'store_cities');
 end;
 --------------------------------------------------------------------------------
 procedure store_routes(p_state in out nocopy web_json.t_fill_state) is
@@ -410,7 +432,7 @@ begin
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_routes');
+ --write_log(p_start,'store_routes');
 end;
 --------------------------------------------------------------------------------
 procedure datorii_client(p_state in out nocopy web_json.t_fill_state) is
@@ -448,7 +470,7 @@ begin
  end loop;
  --
  web_json.end_subnodes(p_state);
- --write_log('datorii_client');
+ --write_log(p_start,'datorii_client');
 end;
 --------------------------------------------------------------------------------
 procedure store_puncts(p_state in out nocopy web_json.t_fill_state) is
@@ -523,7 +545,7 @@ begin
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_branches');
+ --write_log(p_start,'store_branches');
 end;
 --------------------------------------------------------------------------------
 procedure store_groups(p_state in out nocopy web_json.t_fill_state) is
@@ -579,7 +601,7 @@ begin
   end loop;
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_groups');
+ --write_log(p_start,'store_groups');
 end;
 --------------------------------------------------------------------------------
 procedure store_products(p_state in out nocopy web_json.t_fill_state) is
@@ -608,7 +630,7 @@ begin
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_products');
+ --write_log(p_start,'store_products');
 end;
 --------------------------------------------------------------------------------
 procedure store_remnants(p_state in out nocopy web_json.t_fill_state) is
@@ -627,17 +649,13 @@ begin
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_remnants');
+ --write_log(p_start,'store_remnants');
 end;
 --------------------------------------------------------------------------------
 procedure store_doctypes(p_state in out nocopy web_json.t_fill_state) is
 begin
  web_json.add_subnode_array(p_state,'doctypes');
  web_json.begin_subnodes(p_state);
--- for c in (select cod1,denumirea
---   from tms_syss
---   where tip='Z' and cod=2002 and cod1>0 and number1=8
---   order by cod1)
  for c in (select id,tip_doc from vms_order_tip_doc where prn_orders=8)
  loop
   web_json.add_subnode_object(p_state);
@@ -647,15 +665,48 @@ begin
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
- --write_log('store_doctypes');
+ --write_log(p_start,'store_doctypes');
+end;
+--------------------------------------------------------------------------------
+procedure store_orders(p_state in out nocopy web_json.t_fill_state) is
+ v_sysfid int:=sys_context('envun4','vsysf_pre_solicit');
+ v_user_id int:=sys_context('envun4','param_userid');
+ v_found boolean:=false;
+begin
+ for c in (select o.nrdoc,o.data_livr,o.client,o.tip
+  from vmdb_web_orders o,tmdb_docs d,tmdb_docs_status s,vms_order_route_agents r,vms_order_agents a
+  where o.nrdoc=d.cod and s.nrdoc=d.cod and r.id_ruta=o.ruta and a.id=r.id_agent
+    and d.sysfid=v_sysfid and s.status=30 and s.val=1 and r.main_agent='P' and a.cod_user=v_user_id
+  order by o.data_livr,o.client,o.tip,o.nrdoc)
+ loop
+  if not v_found then
+   v_found:=true;
+   web_json.add_subnode_array(p_state,'orders');
+   web_json.begin_subnodes(p_state);
+  end if;
+  --
+  web_json.add_subnode_object(p_state);
+  web_json.begin_subnodes(p_state);
+   web_json.add_subnode_number(p_state,'i',c.nrdoc);
+   web_json.add_subnode_string(p_state,'dt',to_char(c.data_livr,date_format));
+   web_json.add_subnode_number(p_state,'pt',c.client);
+   web_json.add_subnode_number(p_state,'tp',c.tip);
+  web_json.end_subnodes(p_state);
+ end loop;
+ --
+ if v_found then
+  web_json.end_subnodes(p_state);
+ end if;
+ --write_log(p_start,'store_orders');
 end;
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int) is
  v_state web_json.t_fill_state;
+ v_start date:=sysdate;
 begin
  --dbms_output.put_line(current_timestamp||' refresh_database('||p_session||') BEGIN');
- clear_log;
- --write_log('refresh_database('||p_session||') begin');
+ start_log('refresh_database('||p_session||') begin');
+ --write_log(p_start,'refresh_database('||p_session||') begin');
  --
  web_json.create_top_node_object(v_state);
  web_json.begin_subnodes(v_state);
@@ -664,8 +715,8 @@ begin
   web_json.add_subnode_number(v_state,'session',p_session);
  end if;
  --
- prepare_debitori;
- prepare_sld;
+ prepare_debitori(v_start);
+ prepare_sld(v_start);
  --
  store_markets(v_state);
  store_cities(v_state);
@@ -680,12 +731,12 @@ begin
  --new_price_algoritm(v_state);
  store_remnants(v_state);
  store_doctypes(v_state);
+ store_orders(v_state);
  --new_sold_make(v_state);
  --rep_plan_vinz(v_state);
  --
  web_json.end_subnodes(v_state);
- --write_log('refresh_database('||p_session||') end');
- --dbms_output.put_line(current_timestamp||' refresh_database('||p_session||') END');
+ write_log(v_start,'refresh_database('||p_session||') end');
 end;
 --------------------------------------------------------------------------------
 procedure export_database(p_session int) is
@@ -695,6 +746,7 @@ procedure export_database(p_session int) is
  v_doc_date date:=trunc(sysdate);
  v_doc_dm varchar2(10):=to_char(v_doc_date,date_format);
  v_username varchar2(50);
+ v_l3_nrset number;
  v_doc_node_id int;
  v_ids owa_text.int_arr;
  v_nrs owa_text.int_arr;
@@ -702,9 +754,9 @@ procedure export_database(p_session int) is
  c_exp_days constant int:=3;
  --v_created constant varchar2(30):=to_char(sysdate,time_format);
  v_state web_json.t_fill_state;
- v_l3_nrset number;
+ v_start date:=sysdate;
 begin
- clear_log;
+ start_log('export_database('||p_session||')');
  --
  select nvl(min(username),' ') into v_username from xusers where cod=v_userid;
  --

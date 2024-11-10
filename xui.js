@@ -219,10 +219,10 @@ app.showSuperPage=x=>{
 }
 
 app.showPageServerData=key=>{
- if(app.vm.d.p.name!='serverdata')return app.showSubPage('serverdata',null,{node:app.vm.d.a.data.lst,title:'root',path:'/'})
- const node=app.vm.d.p.data.node[key]
- const title=Array.isArray(app.vm.d.p.data.node)?(node.n||(app.vm.d.p.data.path+'['+key+']')):key
- const path=app.vm.d.p.data.path+(Array.isArray(app.vm.d.p.data.node)?('['+key+']'):(app.vm.d.p.data.path=='/'?key:('/'+key)))
+ if(key==undefined||app.vm.d.p.name!='serverdata')return app.showSubPage('serverdata',null,{title:'root',path:'/'})
+ const node=app.vm.d.t.N[key]
+ const title=app.vm.d.t.a?(node.n||(app.vm.d.p.data.path+'['+key+']')):key
+ const path=app.vm.d.p.data.path+(app.vm.d.t.a?('['+key+']'):(app.vm.d.p.data.path=='/'?key:('/'+key)))
  app.showSubPage('serverdata',null,{node:node,title:title,path:path})
 }
 
