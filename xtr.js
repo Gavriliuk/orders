@@ -2,7 +2,7 @@
 tr.prototype.init(['en','ru','ro'])
 tr.prototype.set(localStorage.getItem('language'))
 // Common
-tr(['Orders','Заявки','Comenzi'])
+tr(['Orders','Заказы','Comenzi'])
 tr(['Log out','Выход','Iesire'])
 tr(['Cancel','Отмена',''])
 tr(['Error','Ошибка',''])
@@ -14,7 +14,8 @@ tr(['Password','Пароль',''])
 // Page main
 tr(['Data loaded','Данные загружены',''])
 tr(['Orders to export','Заказы к отправке',''])
-tr(['Orders exported','Отправлено заказов',''])
+tr(['Orders exported','Отправленные заказы',''])
+tr(['Pre-Orders','Предзаказы',''])
 tr(['No data','Нет данных',''])
 tr(['Current state','Текущее состояние',''])
 tr(['Refresh','Обновить',''])

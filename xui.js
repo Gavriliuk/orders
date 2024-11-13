@@ -149,6 +149,7 @@ app.login=async(username,password)=>{
    return
  }else{
   app.restore()
+  app.deleteExpired()
  }
  app.username=username
  app.password=password
@@ -221,7 +222,7 @@ app.showSuperPage=x=>{
 app.showPageServerData=key=>{
  if(key==undefined||app.vm.d.p.name!='serverdata')return app.showSubPage('serverdata',null,{title:'root',path:'/'})
  const node=app.vm.d.t.N[key]
- const title=app.vm.d.t.a?(node.n||(app.vm.d.p.data.path+'['+key+']')):key
+ const title=app.vm.d.t.a?(node.n||(app.vm.d.p.data.path.split('/').pop()+'['+key+']')):key
  const path=app.vm.d.p.data.path+(app.vm.d.t.a?('['+key+']'):(app.vm.d.p.data.path=='/'?key:('/'+key)))
  app.showSubPage('serverdata',null,{node:node,title:title,path:path})
 }
@@ -264,16 +265,27 @@ app.query=(request,caption,resolve)=>{
  })
 }
 
-app.countProducts=G=>{
+app.countProducts=(G,p)=>{
  if(G){
-  const cp=app.vm.d.a.data.lst.products.filter(p=>p.gr==G.i).length
-  if(cp)G.cp=G.cpp=cp
+  if(p){
+   const cp=app.vm.d.a.data.lst.products.filter(p=>p.gr==G.i).length
+   if(cp)G.cp=G.cpp=cp
+  }else delete G.cg
   app.vm.d.a.data.lst.groups.forEach(g=>{if(g.p==G.i){
-   app.countProducts(g)
+   app.countProducts(g,p)
    G.cg=(G.cg||0)+1
    if(g.cpp)G.cpp=(G.cpp||0)+g.cpp
   }})
- }else app.vm.d.a.data.lst.groups.forEach(g=>{if(!g.p)app.countProducts(g)})
+ }else{
+  app.vm.d.a.data.lst.groups.forEach(g=>{if(!g.p)app.countProducts(g,1)})
+  app.vm.d.a.data.lst.groups=app.vm.d.a.data.lst.groups.filter(g=>g.cpp)
+  app.vm.d.a.data.lst.groups.forEach(g=>{if(!g.p)app.countProducts(g)})
+ }
+}
+
+app.deleteExpired=x=>{
+ const now=new Date().toJSON().slice(0,10)
+ app.vm.d.a.data.doc=app.vm.d.a.data.doc.filter(d=>!d.ex||d.ex>=now)
 }
 
 app.dbRefresh=x=>{
@@ -292,7 +304,7 @@ app.dbRefresh=x=>{
 app.dbExport=x=>{
  const orders=app.vm.d.a.data.doc.filter(d=>!d.nr&&d.ready)
  if(!orders.length)return app.error(tr('No orders ready to export'))
- const doc=orders.map(d=>({id:d.id,pt:d.pt,tp:d.tp,dt:d.dt,p:structuredClone(d.p)}))
+ const doc=orders.map(d=>({id:d.id,pt:d.pt,tp:d.tp,dt:d.dt,po:d.po,p:structuredClone(d.p)}))
  const request={cmd:'dbexport',usr:app.username,pwd:app.password,session:app.vm.session(),doc:doc}
  app.query(request,'Export orders',data=>{
   app.vm.session(data.session)
@@ -302,11 +314,15 @@ app.dbExport=x=>{
   })
   app.backup('doc')
  })
+ app.deleteExpired()
 }
 
-app.newOrder=x=>{
+app.newOrder=po=>{
  if(app.vm.d.p.name!='client')return app.error('Wrong page: '+app.vm.d.p.name)
- app.showSubPage('order',null,{punct:app.vm.d.p.data.id,date:app.vm.txtD(app.vm.nextD(app.vm.curD())),products:[]})
+ const data={punct:app.vm.d.p.data.id,date:app.vm.txtD(app.vm.nextD(app.vm.curD()))}
+ if(po)data.po=po
+ data.products=po?structuredClone(app.vm.oval(app.vm.d.a.data.lst.orders.find(o=>o.i==po),'p'))||[]:[]
+ app.showSubPage('order',null,data)
 }
 
 app.showOrder=id=>{
@@ -314,6 +330,8 @@ app.showOrder=id=>{
  if(!doc)return app.error('Order '+id+' not found')
  const data={punct:doc.pt,date:doc.dt,type:doc.tp,products:structuredClone(doc.p)}
  if(doc.ready)data.ready=true
+ if(doc.nr)data.nrdoc=doc.nr
+ if(doc.ex)data.ex=doc.ex
  app.showSubPage('order',id,data)
 }
 
@@ -373,13 +391,11 @@ app.setProductQty=x=>{
 
 app.createOrder=close=>{
  if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
- const punct=app.vm.d.p.data.punct
- const date=app.vm.d.p.data.date
- const type=app.vm.d.p.data.type
  let id=1
  app.vm.d.a.data.doc.forEach(d=>{if(d.id>=id)id=d.id+1})
- const doc={id:id,pt:punct,dt:date}
- if(type)doc.tp=type
+ const doc={id:id,pt:app.vm.d.p.data.punct,dt:app.vm.d.p.data.date}
+ if(app.vm.d.p.data.type)doc.tp=app.vm.d.p.data.type
+ if(app.vm.d.p.data.po)doc.po=app.vm.d.p.data.po
  if(app.vm.d.p.data.ready)doc.ready=true
  doc.p=structuredClone(app.vm.d.p.data.products)
  app.vm.d.a.data.doc.push(doc)

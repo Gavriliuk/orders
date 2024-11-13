@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 10.11.24
+-- Last modification date: 13.11.24
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -12,7 +12,7 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 10.11.24
+-- Last modification date: 13.11.24
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
@@ -677,6 +677,7 @@ begin
   from vmdb_web_orders o,tmdb_docs d,tmdb_docs_status s,vms_order_route_agents r,vms_order_agents a
   where o.nrdoc=d.cod and s.nrdoc=d.cod and r.id_ruta=o.ruta and a.id=r.id_agent
     and d.sysfid=v_sysfid and s.status=30 and s.val=1 and r.main_agent='P' and a.cod_user=v_user_id
+    and not exists (select null from tmdb_docs_add where parent_nrdoc=o.nrdoc)
   order by o.data_livr,o.client,o.tip,o.nrdoc)
  loop
   if not v_found then
@@ -691,6 +692,21 @@ begin
    web_json.add_subnode_string(p_state,'dt',to_char(c.data_livr,date_format));
    web_json.add_subnode_number(p_state,'pt',c.client);
    web_json.add_subnode_number(p_state,'tp',c.tip);
+   --
+   web_json.add_subnode_array(p_state,'p');
+   web_json.begin_subnodes(p_state);
+   --
+   for d in (select product,cant from vmdb_web_orders_data where nrdoc=c.nrdoc)
+   loop
+    web_json.add_subnode_object(p_state);
+    web_json.begin_subnodes(p_state);
+     web_json.add_subnode_number(p_state,'i',d.product);
+     web_json.add_subnode_number(p_state,'q',d.cant);
+    web_json.end_subnodes(p_state);
+   end loop;
+   --
+   web_json.end_subnodes(p_state);
+   --
   web_json.end_subnodes(p_state);
  end loop;
  --
@@ -775,6 +791,7 @@ begin
    v_doc_punct int:=web_json.get_subnode_value(c.id,'pt');
    --v_doc_stock int:=web_json.get_subnode_value(c.id,'stock');
    v_doc_type int:=web_json.get_subnode_value(c.id,'tp');
+   v_doc_parent int:=web_json.get_subnode_value(c.id,'po');
    v_doc_delivery date:=trunc(to_date(web_json.get_subnode_value(c.id,'dt'),date_format));
    --v_doc_shipment date:=to_date(web_json.get_subnode_value(c.id,'shipment'),date_format);
    --v_doc_create timestamp:=to_date(web_json.get_subnode_value(c.id,'create'),time_format);
@@ -809,10 +826,14 @@ begin
    --
    v_nrset_complete:=to_number(v_l1_nrset||0||v_l3_nrset);
    ---
-   insert into tmdb_docs(datamanual,sysfid,userid,valuta,tip,at2,nrset)
+   insert into tmdb_docs (datamanual,sysfid,userid,valuta,tip,at2,nrset)
    values (v_doc_date,v_sysfid,v_userid,upper('LEI'),upper('P'),2,v_nrset_complete)
    returning cod
    into v_doc_nr;
+   --
+   if v_doc_parent is not null then
+    insert into tmdb_docs_add (cod,parent_nrdoc) values (v_doc_nr,v_doc_parent);
+   end if;
    --
    insert into vmdb_web_orders
    (
