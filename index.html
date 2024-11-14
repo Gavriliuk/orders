@@ -70,30 +70,35 @@
 <div class="page container signed">
 
 <div v-if="d.p.name=='main'" id="page-main">
-<div class="card-panel hoverable collection no-wrap flow-text no-select">
+<div class="card-panel hoverable collection no-wrap flow-text no-select"
+ :js1="(d.t.no=d.a.data.doc?d.a.data.doc.filter(d=>!d.nr).length:0)&&null||null"
+ :js2="(d.t.nd=d.a.data.doc?d.a.data.doc.filter(d=>d.nr).length:0)&&null||null"
+ :js3="(d.t.nr=d.a.data.lst.routes?d.a.data.lst.routes.length:0)&&null||null"
+ :js4="(d.t.nc=d.a.data.lst.puncts?d.a.data.lst.puncts.length:0)&&null||null"
+ :js5="(d.t.np=d.a.data.lst.products?d.a.data.lst.products.length:0)&&null||null">
 <a class="js collection-item" onclick="app.showPageServerData()">
  <span class="bold">{{tr('Data loaded')}}:</span>
  <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</span>
 </a>
-<a class="js collection-item" onclick="app.showSubPage('orders')">
+<a class="js collection-item" :onclick="d.t.no?'app.showSubPage(\'orders\')':null">
  <span class="bold">{{tr('Orders to export')}}:</span>
- <span class="right">{{d.a.data.doc.filter(d=>!d.nr).length||tr('No data')}}</span>
+ <span class="right">{{d.t.no||tr('No data')}}</span>
 </a>
-<a class="js collection-item" onclick="app.showSubPage('docs')">
+<a class="js collection-item" :onclick="d.t.nd?'app.showSubPage(\'docs\')':null">
  <span class="bold">{{tr('Orders exported')}}:</span>
- <span class="right">{{d.a.data.doc.filter(d=>d.nr).length||tr('No data')}}</span>
+ <span class="right">{{d.t.nd||tr('No data')}}</span>
 </a>
-<a class="js collection-item" onclick="app.showSubPage('routes')">
+<a v-if="d.a.data.lst.routes" class="js collection-item" :onclick="d.t.nr?'app.showSubPage(\'routes\')':null">
  <span class="bold">{{tr('Routes')}}:</span>
- <span class="right">{{d.a.data.lst.routes&&d.a.data.lst.routes.length||tr('No data')}}</span>
+ <span class="right">{{d.t.nr||tr('No data')}}</span>
 </a>
-<a class="js collection-item" onclick="app.showSubPage('clients')">
+<a class="js collection-item" :onclick="d.t.nc?'app.showSubPage(\'clients\')':null">
  <span class="bold">{{tr('Clients')}}:</span>
- <span class="right">{{d.a.data.lst.puncts&&d.a.data.lst.puncts.length||tr('No data')}}</span>
+ <span class="right">{{d.t.nc||tr('No data')}}</span>
 </a>
-<a class="js collection-item" onclick="app.showSubPage('products')">
+<a class="js collection-item" :onclick="d.t.np?'app.showSubPage(\'products\')':null">
  <span class="bold">{{tr('Products')}}:</span>
- <span class="right">{{d.a.data.lst.products&&d.a.data.lst.products.length||tr('No data')}}</span>
+ <span class="right">{{d.t.np||tr('No data')}}</span>
 </a>
 </div>
 </div>
