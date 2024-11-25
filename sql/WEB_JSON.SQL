@@ -1,6 +1,6 @@
 CREATE OR REPLACE package web_json as
 --------------------------------------------------------------------------------
--- Last modification date: 03.09.24
+-- Last modification date: 23.11.24
 --------------------------------------------------------------------------------
 -- Used type declarations
 type t_types is table of char(1) index by binary_integer;
@@ -80,7 +80,7 @@ end;
 
 CREATE OR REPLACE package body web_json as
 --------------------------------------------------------------------------------
--- Last modification date: 03.09.24
+-- Last modification date: 23.11.24
 --------------------------------------------------------------------------------
 type t_stringify_state is record
 (
@@ -720,8 +720,7 @@ begin
   p_state.type:=type_array;
   add_node(p_state);
   push_node(p_state);
-  --v_expect:=expect_value;
-  init_value(p_state);
+  init_name(p_state);
  elsif p_state.parent_type=type_array and p_state.idx=0 and p_char=']' then
   pop_node(p_state);
   p_state.expect:=expect_comma;
@@ -875,7 +874,7 @@ begin
   elsif p_state.parent_type=type_array then
    p_state.idx:=p_state.idx+1;
    p_state.expect:=expect_value;
-   init_value(p_state);
+   init_name(p_state);
   else
    raise_application_error(-20002,p_state.test_source||'Syntax error: invalid parent type '||p_state.parent_type||' at pos '||p_state.token_pos);
   end if;
@@ -1312,6 +1311,15 @@ procedure test_parse is
   check_node(1,0,null,type_object,'x',null);
   check_node(2,0,null,type_array,'y',null);
   check_node(3,0,null,type_boolean,'z','false');
+  --
+  parse_debug('{"x":{},"y":[{"z":0},0]}');
+  check_node_count(6);
+  check_top_node(type_object,null);
+  check_node(1,0,null,type_object,'x',null);
+  check_node(2,0,null,type_array,'y',null);
+  check_node(3,2,0,type_object,null,null);
+  check_node(4,3,null,type_number,'z',0);
+  check_node(5,2,1,type_number,null,0);
  end;
  --
 begin

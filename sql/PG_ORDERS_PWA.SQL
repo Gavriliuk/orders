@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 13.11.24
+-- Last modification date: 23.11.24
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -12,7 +12,7 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 13.11.24
+-- Last modification date: 23.11.24
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
@@ -852,7 +852,7 @@ begin
     --,v_doc_sum,v_auto,v_sof,v_doc_create,v_cmd_cl,v_doc_id
    );
    --
-   v_data_parent_id:=web_json.get_subnode_id(v_doc_node_id,'p');
+   v_data_parent_id:=web_json.get_subnode_id(c.id,'p');
    loop
     v_data_node_id:=web_json.get_subnode_id(v_data_parent_id,v_data_index);
     exit when v_data_node_id is null;
