@@ -759,11 +759,11 @@ procedure export_database(p_session int) is
  pragma autonomous_transaction;
  v_userid int:=sys_context('envun4','param_userid');
  v_sysfid int:=sys_context('envun4','vsysf_solicit');
+ v_doc_node_id int:=web_json.get_subnode_id(0,'doc');
  v_doc_date date:=trunc(sysdate);
  v_doc_dm varchar2(10):=to_char(v_doc_date,date_format);
  v_username varchar2(50);
  v_l3_nrset number;
- v_doc_node_id int;
  v_ids owa_text.int_arr;
  v_nrs owa_text.int_arr;
  v_exs owa_text.vc_arr;
@@ -771,6 +771,112 @@ procedure export_database(p_session int) is
  --v_created constant varchar2(30):=to_char(sysdate,time_format);
  v_state web_json.t_fill_state;
  v_start date:=sysdate;
+ --
+ procedure create_document(p_id int) is
+  v_doc_id int:=web_json.get_subnode_value(p_id,'id');
+  v_doc_punct int:=web_json.get_subnode_value(p_id,'pt');
+  --v_doc_stock int:=web_json.get_subnode_value(p_id,'stock');
+  v_doc_type int:=web_json.get_subnode_value(p_id,'tp');
+  v_doc_parent int:=web_json.get_subnode_value(p_id,'po');
+  v_doc_delivery date:=trunc(to_date(web_json.get_subnode_value(p_id,'dt'),date_format));
+  --v_doc_shipment date:=to_date(web_json.get_subnode_value(p_id,'shipment'),date_format);
+  --v_doc_create timestamp:=to_date(web_json.get_subnode_value(p_id,'create'),time_format);
+  --v_doc_modify date:=to_date(web_json.get_subnode_value(p_id,'modify'),time_format);
+  --v_doc_payorder int:=web_json.get_subnode_value(p_id,'pay');
+  --v_doc_repaydebt int:=web_json.get_subnode_value(p_id,'repay');
+  --v_doc_extra varchar2(4000):=web_json.get_subnode_value(p_id,'extra');
+  --v_doc_sum float:=web_json.get_subnode_value(p_id,'sum');
+  v_data_parent_id int:=web_json.get_subnode_id(p_id,'p');
+  --v_cmd_cl varchar2(20):=get_num(v_doc_extra);
+  --v_len int:=length(v_cmd_cl);
+  v_l1_nrset number;
+  v_nrset_complete number;
+  v_data_index int:=0;
+  v_data_node_id int;
+  v_data_product int;
+  v_data_qty float;
+  --v_data_plus int;
+  --v_data_buc int;
+  v_doc_nr int;
+  --v_auto number;
+  --v_sof number;
+ begin
+  --Creating a document with these values and storing the nrdoc in v_doc_nr
+  envun4.envsetvalue('data$livr',v_doc_date);
+  --
+  begin
+   select to_number(subset) into v_l1_nrset from vms_order_tip_doc where prn_orders=8 and id=v_doc_type;
+  exception when no_data_found then
+   msg('Invalid order type: '||v_doc_type);
+  end;
+  --
+  v_nrset_complete:=to_number(v_l1_nrset||0||v_l3_nrset);
+  ---
+  insert into tmdb_docs (datamanual,sysfid,userid,valuta,tip,at2,nrset)
+  values (v_doc_date,v_sysfid,v_userid,upper('LEI'),upper('P'),2,v_nrset_complete)
+  returning cod
+  into v_doc_nr;
+  --
+  if v_doc_parent is not null then
+   update tmdb_docs_add set parent_nrdoc=v_doc_parent where cod=v_doc_nr;
+   if sql%rowcount=0 then
+    insert into tmdb_docs_add (cod,parent_nrdoc) values (v_doc_nr,v_doc_parent);
+   end if;
+  end if;
+  --
+  insert into vmdb_web_orders
+  (
+   nrdoc,data_livr,punct
+   --,depozit
+   ,tip
+   --,contact_inf
+   --,ap,automobil,sofer,CREATE_DATE_ORDERS,CMD_CLIENT,doc_id_orderss
+  )
+  values
+  (
+   v_doc_nr,v_doc_delivery,v_doc_punct
+   --,decode(v_doc_stock,1,null,v_doc_stock)
+   ,v_doc_type
+   --,nvl(decode(v_len,0,v_doc_extra,substr(v_doc_extra,v_len+1)),v_doc_extra)
+   --,v_doc_sum,v_auto,v_sof,v_doc_create,v_cmd_cl,v_doc_id
+  );
+  --
+  loop
+   v_data_node_id:=web_json.get_subnode_id(v_data_parent_id,v_data_index);
+   exit when v_data_node_id is null;
+   -- Extracting data record values
+   v_data_product:=web_json.get_subnode_value(v_data_node_id,'i');
+   v_data_qty:=web_json.get_subnode_value(v_data_node_id,'q');
+   --v_data_buc:=web_json.get_subnode_value(v_data_node_id,'q_buc');
+   --v_data_plus:=web_json.get_subnode_value(v_data_node_id,'r');
+   -- Adding a record to the document data table with these values
+   insert into vmdb_web_orders_data(nrdoc,product,cant)
+   values (v_doc_nr,v_data_product,v_data_qty);
+   --
+   pkg_orders_docs.comanda_gfc(v_doc_nr,1);
+   pkg_orders_docs.comanda_gfc_encashment(v_doc_nr);
+   -- TODO: zapolneati eshe um producta
+   v_data_index:=v_data_index+1;
+  end loop;
+  --
+  --delete from VMDB_WEB_ORDERS_DATA
+  --where nrdoc=v_doc_nr and pret_cu_tva=0;
+  --
+  pkg_orders_docs.comanda_gfc(v_doc_nr,1);
+  pkg_orders_docs.comanda_gfc_encashment(v_doc_nr);
+  --
+  -- verificare gratuitati
+  --pk_bc_promo.check_gratuitate(null,v_doc_nr,'orders'); 
+  --
+  --commit;
+  --
+  envun4.envsetvalue('data$livr',null);
+  --
+  v_ids(v_ids.count+1):=v_doc_id;
+  v_nrs(v_nrs.count+1):=v_doc_nr;
+  v_exs(v_exs.count+1):=to_char(v_doc_delivery+c_exp_days,date_format);
+ end;
+ --
 begin
  start_log('export_database('||p_session||')');
  --
@@ -782,112 +888,10 @@ begin
  where obj_id=(select obj_id from xusers where cod=v_userid/*342*/)
    and name='FILTRU';
  --
- v_doc_node_id:=web_json.get_subnode_id(0,'doc');
  -- v_doc_node_id can be null here: if so, no loop entries would be done
  for c in (select id from web_node where parent_id=v_doc_node_id order by id)
  loop
-  declare
-   v_doc_id int:=web_json.get_subnode_value(c.id,'id');
-   v_doc_punct int:=web_json.get_subnode_value(c.id,'pt');
-   --v_doc_stock int:=web_json.get_subnode_value(c.id,'stock');
-   v_doc_type int:=web_json.get_subnode_value(c.id,'tp');
-   v_doc_parent int:=web_json.get_subnode_value(c.id,'po');
-   v_doc_delivery date:=trunc(to_date(web_json.get_subnode_value(c.id,'dt'),date_format));
-   --v_doc_shipment date:=to_date(web_json.get_subnode_value(c.id,'shipment'),date_format);
-   --v_doc_create timestamp:=to_date(web_json.get_subnode_value(c.id,'create'),time_format);
-   --v_doc_modify date:=to_date(web_json.get_subnode_value(c.id,'modify'),time_format);
-   --v_doc_payorder int:=web_json.get_subnode_value(c.id,'pay');
-   --v_doc_repaydebt int:=web_json.get_subnode_value(c.id,'repay');
-   --v_doc_extra varchar2(4000):=web_json.get_subnode_value(c.id,'extra');
-   --v_doc_sum float:=web_json.get_subnode_value(c.id,'sum');
-   --v_cmd_cl varchar2(20):=get_num(v_doc_extra);
-   --v_len int:=length(v_cmd_cl);
-   v_l1_nrset number;
-   v_nrset_complete number;
-   v_data_parent_id int;
-   v_data_index int:=0;
-   v_data_node_id int;
-   v_data_product int;
-   v_data_qty float;
-   --v_data_plus int;
-   --v_data_buc int;
-   v_doc_nr int;
-   --v_auto number;
-   --v_sof number;
-  begin
-   --Creating a document with these values and storing the nrdoc in v_doc_nr
-   envun4.envsetvalue('data$livr',v_doc_date);
-   --
-   begin
-    select to_number(subset) into v_l1_nrset from vms_order_tip_doc where prn_orders=8 and id=v_doc_type;
-   exception when no_data_found then
-    msg('Invalid order type: '||v_doc_type);
-   end;
-   --
-   v_nrset_complete:=to_number(v_l1_nrset||0||v_l3_nrset);
-   ---
-   insert into tmdb_docs (datamanual,sysfid,userid,valuta,tip,at2,nrset)
-   values (v_doc_date,v_sysfid,v_userid,upper('LEI'),upper('P'),2,v_nrset_complete)
-   returning cod
-   into v_doc_nr;
-   --
-   if v_doc_parent is not null then
-    insert into tmdb_docs_add (cod,parent_nrdoc) values (v_doc_nr,v_doc_parent);
-   end if;
-   --
-   insert into vmdb_web_orders
-   (
-    nrdoc,data_livr,punct
-    --,depozit
-    ,tip
-    --,contact_inf
-    --,ap,automobil,sofer,CREATE_DATE_ORDERS,CMD_CLIENT,doc_id_orderss
-   )
-   values
-   (
-    v_doc_nr,v_doc_delivery,v_doc_punct
-    --,decode(v_doc_stock,1,null,v_doc_stock)
-    ,v_doc_type
-    --,nvl(decode(v_len,0,v_doc_extra,substr(v_doc_extra,v_len+1)),v_doc_extra)
-    --,v_doc_sum,v_auto,v_sof,v_doc_create,v_cmd_cl,v_doc_id
-   );
-   --
-   v_data_parent_id:=web_json.get_subnode_id(c.id,'p');
-   loop
-    v_data_node_id:=web_json.get_subnode_id(v_data_parent_id,v_data_index);
-    exit when v_data_node_id is null;
-    -- Extracting data record values
-    v_data_product:=web_json.get_subnode_value(v_data_node_id,'i');
-    v_data_qty:=web_json.get_subnode_value(v_data_node_id,'q');
-    --v_data_buc:=web_json.get_subnode_value(v_data_node_id,'q_buc');
-    --v_data_plus:=web_json.get_subnode_value(v_data_node_id,'r');
-    -- Adding a record to the document data table with these values
-    insert into vmdb_web_orders_data(nrdoc,product,cant)
-    values (v_doc_nr,v_data_product,v_data_qty);
-    --
-    pkg_orders_docs.comanda_gfc(v_doc_nr,1);
-    pkg_orders_docs.comanda_gfc_encashment(v_doc_nr);
-    -- TODO: zapolneati eshe um producta
-    v_data_index:=v_data_index+1;
-   end loop;
-   --
-   --delete from VMDB_WEB_ORDERS_DATA
-   --where nrdoc=v_doc_nr and pret_cu_tva=0;
-   --
-   pkg_orders_docs.comanda_gfc(v_doc_nr,1);
-   pkg_orders_docs.comanda_gfc_encashment(v_doc_nr);
-   --
-   -- verificare gratuitati
-   --pk_bc_promo.check_gratuitate(null,v_doc_nr,'orders'); 
-   --
-   --commit;
-   --
-   envun4.envsetvalue('data$livr',null);
-   --
-   v_ids(v_ids.count+1):=v_doc_id;
-   v_nrs(v_nrs.count+1):=v_doc_nr;
-   v_exs(v_exs.count+1):=to_char(v_doc_delivery+c_exp_days,date_format);
-  end;
+  create_document(c.id);
  end loop;
  --
  web_json.create_top_node_object(v_state);
