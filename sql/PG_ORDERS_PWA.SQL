@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 23.11.24
+-- Last modification date: 25.11.24
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -12,7 +12,7 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 23.11.24
+-- Last modification date: 25.11.24
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
@@ -423,7 +423,7 @@ begin
  for r in (select distinct id_ruta,clc_ruta_t
    from vms_order_route_agents
    where id_agent=v_agent_id and main_agent='P'
-   order by id_ruta)
+   order by clc_ruta_t,id_ruta)
  loop
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
@@ -495,7 +495,7 @@ begin
     and a.nrset=v_company_id
     and sysdate between a.datas and a.datae
     and a.main_agent='P'
-  order by m.cod
+  order by m.client,m.cod
  )
  loop
   web_json.add_subnode_object(p_state);
@@ -731,21 +731,21 @@ begin
   web_json.add_subnode_number(v_state,'session',p_session);
  end if;
  --
- prepare_debitori(v_start);
- prepare_sld(v_start);
+ --prepare_debitori(v_start);
+ --prepare_sld(v_start);
  --
- store_markets(v_state);
- store_cities(v_state);
- store_routes(v_state);
- datorii_client(v_state);
+ --store_markets(v_state);
+ --store_cities(v_state);
+ --store_routes(v_state);
+ --datorii_client(v_state);
  --punct_vinzare_short(v_state);
  --punct_vinzare(v_state);
  store_puncts(v_state);
- store_branches(v_state);
+ --store_branches(v_state);
  store_groups(v_state);
  store_products(v_state);
  --new_price_algoritm(v_state);
- store_remnants(v_state);
+ --store_remnants(v_state);
  store_doctypes(v_state);
  store_orders(v_state);
  --new_sold_make(v_state);
