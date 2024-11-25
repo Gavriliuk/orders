@@ -260,6 +260,7 @@
 
 <div v-if="d.p.name=='order'" id="page-order">
 <div class="collection with-header flow-text no-select"
+ :js0="(d.t.T=d.a.data.lst.doctypes)&&null"
  :js1="(d.t.D=new Date(d.p.data.date))&&null"
  :js2="(d.p.data.ex&&(d.t.E=new Date(d.p.data.ex)))&&null"
  :js3="(d.t.N=new Date(curD()))&&null"
@@ -271,10 +272,10 @@
  <div v-else-if="d.p.data.po" class="left">#{{d.p.data.po}}</div>
  <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
 </div>
-<div v-if="oval(d.a.data.lst.doctypes,'length')" class="collection-item wide row">
+<div v-if="d.t.T&&d.t.T.length" class="collection-item wide row">
  <div class="col s12 l6 caption">{{tr('Order type')}}:</div>
  <div class="col s12 l6 right-align">
-  <span>{{d.p.data.type&&oval(d.a.data.lst.doctypes.find(t=>t.i==d.p.data.type))}}</span>
+  <span :class="d.p.data.type?null:'red-text'">{{!d.p.data.type?tr('Choose the order type'):(oval(d.t.T.find(t=>t.i==d.p.data.type))||(tr('Unknown order type')+': '+d.p.data.type))}}</span>
   <a v-if="!d.p.data.nrdoc" class="js waves-effect waves-light btn icon" onclick="app.editDocType()"><i class="material-icons">dehaze</i></a>
  </div>
 </div>
@@ -295,7 +296,7 @@
  </div>
 </div>
 </div>
-<div v-if="!d.p.data.nrdoc" class="right-align">
+<div v-if="!d.p.data.nrdoc&&(d.p.data.type||!d.t.T||!d.t.T.length)" class="right-align">
  <label v-if="d.p.data.id" class=" flow-text left" style="margin-left:10px">
   <input type="checkbox" class="filled-in" :checked="d.p.data.ready" />
   <span class="caption" style="font-size:revert" onclick="app.toggleOrderReady()">{{tr('Ready to export')}}</span>
