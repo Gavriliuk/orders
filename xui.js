@@ -320,7 +320,10 @@ app.dbExport=x=>{
 app.newOrder=po=>{
  if(app.vm.d.p.name!='client')return app.error('Wrong page: '+app.vm.d.p.name)
  const data={punct:app.vm.d.p.data.id,date:app.vm.txtD(app.vm.nextD(app.vm.curD()))}
- if(po)data.po=po
+ if(po){
+  data.po=po
+  data.type=app.vm.oval(app.vm.d.a.data.lst.orders.find(d=>d.i==po),'tp')
+ }
  data.products=po?structuredClone(app.vm.oval(app.vm.d.a.data.lst.orders.find(o=>o.i==po),'p'))||[]:[]
  app.showSubPage('order',null,data)
 }
