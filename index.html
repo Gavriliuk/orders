@@ -49,6 +49,8 @@
  <td><ul class="right">
  <li v-for="lang in this.langs" class="right unsigned"><a class="js lang" :onclick="'app.lang(\''+lang+'\')'"><img height="32" width="32" :src="'lang-'+lang+'.svg'"/></a></li>
  <li v-if="d.p.name!='main'" class="nav-signed"><a class="js" onclick="app.showPage()"><i class="material-icons">home</i></a></li>
+ <li class="nav-signed no-searching"><a class="js" onclick="app.search.show()"><i class="material-icons">search</i></a></li>
+ <li class="nav-signed searching"><a class="js yellow-text" onclick="app.search.hide()"><i class="material-icons">search</i></a></li>
  <li v-if="d.a.not" class="nav-signed"><a class="js yellow-text" onclick="app.showMsg()">{{d.a.not}}<i class="material-icons right">notifications_active</i></a></li>
  <li v-else class="nav-signed"><a class="js" onclick="app.showPage('msgs')"><i class="material-icons">notifications_none</i></a></li>
  <li class="nav-signed"><a class="js" onclick="app.logout()"><i class="material-icons">exit_to_app</i></a></li>
@@ -67,7 +69,7 @@
 </form>
 </div>
 
-<div class="page container signed">
+<div id="pages" class="page container signed">
 
 <div v-if="d.p.name=='main'" id="page-main">
 <div class="card-panel hoverable collection no-wrap flow-text no-select"
@@ -80,23 +82,23 @@
  <span class="bold">{{tr('Data loaded')}}:</span>
  <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</span>
 </a>
-<a class="js collection-item" :onclick="d.t.no?'app.showSubPage(\'orders\')':null">
+<a v-if="d.t.no" class="js collection-item" onclick="app.showSubPage('orders')">
  <span class="bold">{{tr('Orders to export')}}:</span>
  <span class="right">{{d.t.no||tr('No data')}}</span>
 </a>
-<a class="js collection-item" :onclick="d.t.nd?'app.showSubPage(\'docs\')':null">
+<a v-if="d.t.nd" class="js collection-item" onclick="app.showSubPage('docs')">
  <span class="bold">{{tr('Orders exported')}}:</span>
  <span class="right">{{d.t.nd||tr('No data')}}</span>
 </a>
-<a v-if="d.a.data.lst.routes" class="js collection-item" :onclick="d.t.nr?'app.showSubPage(\'routes\')':null">
+<a v-if="d.t.nr" class="js collection-item" onclick="app.showSubPage('routes')">
  <span class="bold">{{tr('Routes')}}:</span>
  <span class="right">{{d.t.nr||tr('No data')}}</span>
 </a>
-<a class="js collection-item" :onclick="d.t.nc?'app.showSubPage(\'clients\')':null">
+<a v-if="d.t.nc" class="js collection-item" onclick="app.showSubPage('clients')">
  <span class="bold">{{tr('Clients')}}:</span>
  <span class="right">{{d.t.nc||tr('No data')}}</span>
 </a>
-<a class="js collection-item" :onclick="d.t.np?'app.showSubPage(\'products\')':null">
+<a v-if="d.t.np" class="js collection-item" onclick="app.showSubPage('products')">
  <span class="bold">{{tr('Products')}}:</span>
  <span class="right">{{d.t.np||tr('No data')}}</span>
 </a>
@@ -352,17 +354,17 @@
 </div>
 <div v-if="d.p.data.path=='/'" class="collection-item" style="overflow:hidden">
  <span class="caption">{{tr('Data loaded')}}:</span>
- <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}} <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.dbRefresh()">{{tr('Refresh')}}</a></span>
+ <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}} <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.dbRefresh()"><i class="material-icons">sync</i></a></span>
 </div>
 <a v-for="(n,i) in d.t.A" class="js collection-item" :class="{row:d.t.r}"
  :js1="(d.t.n=d.t.a?n:d.t.N[n])&&null||null"
  :js2="(d.t.l=typeof d.t.n=='object')&&null||null"
  :onclick="d.t.l?('app.showPageServerData('+(d.t.a?i:'\''+n+'\'')+')'):null">
  <span v-if="!d.t.r">{{d.t.n}}</span>
- <div v-if="d.t.r" class="col s3" :class="{'right-align':d.t.a}">{{d.t.a?n.i:n}}:</div>
- <div v-if="d.t.r" class="col s9" :class="{'right-align':!d.t.a}">{{Array.isArray(d.t.n)?('['+d.t.n.length+']'):d.t.l?(d.t.n.n||d.t.n[Object.keys(d.t.n)[1]]):d.t.n}}</div>
+ <div v-if="d.t.r" class="col s4" :class="{'right-align':d.t.a}">{{d.t.a?n.i:n}}:</div>
+ <div v-if="d.t.r" class="col s8" :class="{'right-align':!d.t.a}">{{Array.isArray(d.t.n)?('['+d.t.n.length+']'):d.t.l?(d.t.n.n||d.t.n[Object.keys(d.t.n)[1]]):d.t.n}}</div>
 </a>
-<div v-if="!d.t.A.length" class="collection-item center">{{tr('No data')}}</div>
+<div v-if="d.p.data.node&&!d.t.A.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
 </div>
 
@@ -409,7 +411,7 @@
 </div>
 </div>
 
-<div class="fixed-action-btn no-select signed">
+<div class="fixed-action-btn no-select signed no-searching">
 <a class="btn-floating btn-large"><i class="large material-icons">menu</i></a>
 <ul>
 <li><a class="btn-floating accent-bg hoverable" onclick="app.showPage('orders')"><i class="material-icons">note_add</i></a></li>
@@ -419,6 +421,17 @@
 </ul>
 </div>
 
+<div id="margin-search" class="navbar-fixed searching"></div>
+
+</div>
+
+<div id="dialog-search" class="modal navbar-fixed flow-text searching">
+ <table><tr>
+ <td class="text"><div class="input-field"><input id="search-input" type="search" onkeydown="app.search.onkeydown(event)"/><label for="search-input">{{tr('Text to search')}}:</label></div></td>
+ <td class="small"><a class="js waves-effect waves-light btn search hoverable" onclick="app.search.find()"><i class="material-icons">search</i></a></td>
+ <td class="small"><a class="js waves-effect waves-light btn search hoverable" onclick="app.search.next()"><i class="material-icons">navigate_next</i></a></td>
+ <td class="small"><a class="js waves-effect waves-light btn cancel accent-bg hoverable" onclick="app.search.hide()"><i class="material-icons">close</i></a></td>
+ </tr></table>
 </div>
 
 <div id="modal-msgbox" class="modal">

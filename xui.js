@@ -1,6 +1,6 @@
 const app={}
 
-app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',signed:0,not:0,data:{ts:'',msg:[],doc:[],lst:[],rep:[]}}
+app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',signed:0,not:0,data:{ts:'',msg:[],doc:[],lst:{},rep:[]}}
  ,p:{name:'',title:'',data:{}},t:{}
  ,m:{msgbox:{caption:'',text:'',ok:false},chgpwd:{ok:false},query:{caption:'',status:'',time:0,ok:false},products:{g:0},qty:{P:null,cant:0}}
 }}
@@ -22,12 +22,12 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
 ,fmtD:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric'})
 ,fmtdT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
 ,fmtDT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
-,docpg:x=>app.vm.d.a.data.lst.groups.filter(g=>!g.p).map(g=>({i:g.i,n:g.n
+,docpg:x=>app.vm.d.a.data.lst.groups&&app.vm.d.a.data.lst.groups.filter(g=>!g.p).map(g=>({i:g.i,n:g.n
  ,p:app.vm.d.a.data.lst.products.filter(p=>p.gr==g.i).map(p=>({i:p.i,n:p.n,cant:p.cant,um:p.um
   ,dp:app.vm.d.p.data.products.find(dp=>dp.i==p.i)})).filter(p=>p.dp&&p.dp.q>0).map(p=>({i:p.i,n:p.n,cant:p.cant,um:p.um,q:p.dp.q}))
  })).filter(g=>g.p.length)
 ,docpp:d=>{
-  const pg=app.vm.docpg()
+  const pg=app.vm.docpg()||[]
   const result=[]
   pg.forEach(g=>{
    result.push({i:g.i,n:g.n,g:1})
@@ -81,6 +81,19 @@ app.confirm=(text,caption)=>{
  })
 }
 
+app.search={
+ show:x=>document.body.setAttribute('searching','')
+,hide:x=>document.body.removeAttribute('searching')
+,find:x=>getSelection().empty()||setTimeout(e=>app.search.next(),100)
+,next:x=>find(document.getElementById('search-input').value)
+,onkeydown:e=>{
+  app.log(e)
+  if(e.keyCode==13)app.search.next()||app.search.find()
+  else if(e.keyCode==27)app.search.hide()
+ }
+}
+
+
 app.b64encode=data=>btoa(Array.from(new TextEncoder().encode(data),byte=>String.fromCodePoint(byte),).join(""))
 app.b64decode=text=>new TextDecoder().decode(Uint8Array.from(atob(text),m=>m.codePointAt(0)))
 
@@ -109,7 +122,7 @@ app.transform=(text)=>{
 app.encode=text=>app.transform(app.b64encode(text))
 app.decode=text=>app.b64decode(app.transform(text))
 
-app.lsdef={ts:'',msg:[],doc:[],lst:[],rep:[]}
+app.lsdef={ts:'',msg:[],doc:[],lst:{},rep:[]}
 
 app.backup=key=>{
  if(!key)return Object.keys(app.lsdef).forEach(key=>app.backup(key))
@@ -129,24 +142,29 @@ app.restore=key=>{
  }catch(e){
   app.err(e)
   app.vm.d.a.data[key]=app.lsdef[key]
+  localStorage.removeItem('userdata.'+key)
  }
 }
 
 app.login=async(username,password)=>{
+ if(document.getElementById('modal-msgbox').style.display=='block')return
+ let backup=false
  app.vm.d.a.data=structuredClone(app.lsdef)
  app.makeKey(app.hash(password+'userdata'+password.length))
  username=username.toLowerCase()
  const userhash=app.hash(username+'/'+password)
  const prevuser=localStorage.getItem('username')
  const prevhash=localStorage.getItem('userhash')
- if(prevuser&&prevuser!=username){
-  const result=await app.confirm('Delete previous user data?','New user detected')
+ if(typeof prevuser=='string'&&prevuser!=username){
+  const result=await app.confirm('Replace previous user data?','New user detected')
   if(!result)
    return
+  backup=true
  }else if(prevhash&&prevhash!=userhash){
   const result=await app.confirm('Delete existing user data?','Password is changed')
   if(!result)
    return
+  backup=true
  }else{
   app.restore()
   app.deleteExpired()
@@ -155,6 +173,7 @@ app.login=async(username,password)=>{
  app.password=password
  localStorage.setItem('username',username)
  localStorage.setItem('userhash',userhash)
+ if(backup)app.backup()
  app.showPage()
  app.vm.d.a.signed=true
  document.body.setAttribute('signed','')

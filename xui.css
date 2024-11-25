@@ -82,6 +82,11 @@ a[role=button]:hover {color:crimson}
 
 .bold {font-weight:bold}
 
+body[searching] .no-select {-webkit-user-select:auto;-moz-user-select:auto;-ms-user-select:auto;user-select:auto}
+body[searching] .no-searching {display:none}
+body:not([searching]) .searching {display:none}
+body[searching] .modal.searching {display:initial}
+
 .btn.icon {padding:0 8px}
 
 .collection .collection-item {line-height:initial}
@@ -100,9 +105,18 @@ body:not([signed]) .signed, body[signed] .unsigned {display:none}
 .modal .modal-content {max-height:50vh;overflow-y:auto}
 .no-wrap {overflow:hidden;white-space:nowrap}
 
+#dialog-search {position:fixed;bottom:0;width:100%;border-radius:0}
+#dialog-search td.text {padding:0 5px}
+#dialog-search td.small {width:40px;padding:0 2px;text-align: center}
+#dialog-search .input-field {margin:0.8rem 0 0;}
+#dialog-search .input-field input {margin-bottom:0}
+#dialog-search .btn {padding:0 8px}
+
 .page-header nav {overflow:hidden}
 .page-header table tr {border-width:0}
 .page-header table td {padding:0;vertical-align:top}
+@media only screen and (max-width: 992px) {.page-header nav ul a {padding:0 10px}}
+@media only screen and (max-width: 600px) {.page-header nav ul a {padding:0 5px}}
 
 .page-header .nav-signed i {overflow:hidden}
 body:not([signed]) .page-header .nav-signed i {width:0}
