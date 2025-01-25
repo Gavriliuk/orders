@@ -37,6 +37,11 @@ tr(['Chosen language','Выбранный язык',''])
 tr(['English','Английский','Engleza'])
 tr(['Russian','Русский','Rusa'])
 tr(['Romanian','Румынский','Romana'])
+// Reports
+tr(['Reports','Отчеты','Rapoarte'])
+tr(['Refresh report data','Обновление данных отчета',''])
+tr(['Client Debts','Долги клиентов',''])
+tr(['Sales Plans','Планы продаж',''])
 //
 tr(['Messages','Сообщения',''])
 tr(['Routes','Маршруты',''])

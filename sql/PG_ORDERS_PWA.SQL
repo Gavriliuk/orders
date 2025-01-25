@@ -1,22 +1,38 @@
-CREATE OR REPLACE PACKAGE pg_orders_pwa as
+CREATE OR REPLACE PACKAGE PANILINO.pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 25.11.24
+-- Last modification date: 25.01.25
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
+procedure report_debt(p_session int);
+procedure report_plan(p_session int);
 procedure test;
 --------------------------------------------------------------------------------
 end;
-
 /
 
-CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
+CREATE OR REPLACE PACKAGE BODY PANILINO.pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 25.11.24
+-- Last modification date: 25.01.25
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
 --------------------------------------------------------------------------------
+function get_orders_prop(p_key varchar2) return varchar2 is
+begin
+ for c in (select value from A$ADM a,A$ADP$V p
+   where p.obj_id=a.obj_id and a.obj_type=6 and a.obj_subtype=0 and a.section='ORDERS' and p.KEY=UPPER(p_key)) loop
+  return c.value;
+ end loop;
+ return null;
+end;
+--------------------------------------------------------------------------------------------------
+function get_orders_prop_bool(p_key varchar2,p_def boolean:=false) return boolean is
+ v_value varchar2(10):=lower(substr(get_orders_prop(p_key),1,10));
+begin
+ return case when p_def then v_value<>'false' else v_value='true' end;
+end;
+--------------------------------------------------------------------------------------------------
 procedure start_log(p_text varchar2)is
  procedure start_int is
   pragma autonomous_transaction;
@@ -43,11 +59,10 @@ end;
 --------------------------------------------------------------------------------
 -- Store response blocks
 --------------------------------------------------------------------------------
-procedure prepare_debitori(p_start date)is
+procedure prepare_debitori(p_user_id int,p_insert_master boolean,p_insert_detail boolean) is
  --
  vdata date:=trunc(sysdate);
  --
- v_user_id int;
  v_agent_id int;
  --c_day1 constant int:=7;
  --c_day2 constant int:=14;
@@ -58,8 +73,8 @@ procedure prepare_debitori(p_start date)is
 
  procedure clear_for_user is
  begin
-  delete from yrb_debtitori where user_id=v_user_id;
-  delete from yrb_debtitori_detail where user_id=v_user_id;
+  delete from yrb_debtitori where user_id=p_user_id;
+  delete from yrb_debtitori_detail where user_id=p_user_id;
   delete from xsldx;
   delete from xsld;
   delete from trgb_badolg;
@@ -67,20 +82,23 @@ procedure prepare_debitori(p_start date)is
  end;
  --
 begin
- write_log(p_start,'prepare_debitori begin');
- v_user_id:=sys_context('envun4','param_userid');
+ --write_log(p_start,'prepare_debitori begin');
  --
- if v_user_id is null then
-  msg('param_userid is null');
+ if p_user_id is null then
+  msg('userid is null');
  end if;
  --
  begin
-  select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
+  select id into v_agent_id from vms_order_agents where cod_user=p_user_id;
  exception when no_data_found then
-  msg('param_userid "'||v_user_id||'" is not found in vms_order_agents');
+  msg('userid "'||p_user_id||'" is not found in vms_order_agents');
  end;
  --
  clear_for_user;
+ --
+ if not nvl(p_insert_master,false) and not nvl(p_insert_detail,false) then
+  return;
+ end if;
  --
  insert into xsld (id,dep)
  select 'ruta',id_ruta from vms_order_route_agents where id_agent=v_agent_id and main_agent='P';
@@ -88,13 +106,13 @@ begin
  --
  insert into xsld (id,dep)
  select 'client',cod from vms_order_clients_gr where id_ruta in(select dep from xsld where id='ruta');
- write_log(p_start,'prepare_debitori 3');
+ --write_log(p_start,'prepare_debitori 3');
  --
  un$sld.make(vdata,'4','ADE',pCont=>'221 52 544 5393',pdep=>'select dep from xsld where id=''client''',pNrCM=>'201');
- write_log(p_start,'prepare_debitori 4'); -- 2 min. => 15 sec.
+ --write_log(p_start,'prepare_debitori 4'); -- 2 min. => 15 sec.
  --
  un$sld.make(vdata,'7','AD',pCont=>'221 52 544 5393',pdep=>'select dep from xsld where id=''client''',pNrCM=>'201');
- write_log(p_start,'prepare_debitori 5'); -- 2 min. => 15 sec.
+ --write_log(p_start,'prepare_debitori 5'); -- 2 min. => 15 sec.
  --
  insert into xsld (id,dep,sc1,cont,cant,suma)
  select '5',x.dep,x.sc1,d.cont,m.tip,x.suma
@@ -140,11 +158,11 @@ begin
   ) a
   where a.clientid=x.dep
  )
- where id='1';     
+ where id='1';
  --write_log(p_start,'prepare_debitori 13');
  --i6em datu poslednei registratsii ostatkob
  select nvl((select max(dataend) from tmdb_dsld where cod=1/*dataend<=vdata*/),to_date('31.12.2018','dd.mm.yyyy')) into v_sold_date from dual;
- write_log(p_start,'prepare_debitori 14');
+ --write_log(p_start,'prepare_debitori 14');
  --
  insert into trgb_badolg(dtdep,dtsc1,data,nrdoc,sumadt)
  select dtdep,dtsc1,data,nrdoc,sumadt
@@ -206,7 +224,7 @@ begin
    )
    --ORDER BY dtdep,DATA desc,nrdoc,dtsc1
  );
- write_log(p_start,'prepare_debitori 15'); -- 12 sec.
+ --write_log(p_start,'prepare_debitori 15'); -- 12 sec.
  ------------ cautarea facturilor care vor acoperi soldul total pe client
  for k in (select dep,sc1,suma from xsld where id='1')
  loop
@@ -254,52 +272,55 @@ begin
  update xsld set cant1   =suma where id='doc' and nrcm>28;
  --write_log(p_start,'prepare_debitori 18');
  --
- insert into yrb_debtitori (id_client,id_punct,total,suma35,suma28,suma21,suma14,suma7,tot_plata,total_dat,zile,user_id)
- select client, punct, sum(total), sum(suma35), sum(suma28), sum(suma21), sum(suma14), sum(suma7), sum(tot_plata), sum(tot_plata)+sum(total)
-  ,nvl((select div from xsld c where c.id='doc' and c.dep=a.client/* and c.sc1=a.punct*/   and rownum=1),14),v_user_id  
- from
- (
-  select sc0 client,sc1 punct 
-   ,sum( nvl(sum1,0))+sum(nvl(sum2,0))+sum(nvl(sum3,0))+sum(nvl(sum4,0))+sum(nvl(sum5,0)) total
-   ,sum(nvl(sum0,0))-sum(nvl(sum1,0))-sum(nvl(sum2,0))-sum(nvl(sum3,0))-sum(nvl(sum4,0))-sum(nvl(sum5,0)) tot_plata
-   ,sum(nvl(sum5,0)) suma35
-   ,sum(nvl(sum4,0)) suma28
-   ,sum(nvl(sum3,0)) suma21
-   ,sum(nvl(sum2,0)) suma14
-   ,sum(nvl(sum1,0)) suma7
-   ,sum(cant0) zile
+ if p_insert_master then
+  insert into yrb_debtitori (id_client,id_punct,total,suma35,suma28,suma21,suma14,suma7,tot_plata,total_dat,zile,user_id)
+  select client,punct,sum(suma35+suma28+suma21+suma14+suma7),sum(suma35),sum(suma28),sum(suma21),sum(suma14),sum(suma7)
+   ,sum(total_dat-suma35-suma28-suma21-suma14-suma7),sum(total_dat)
+   ,nvl((select div from xsld c where c.id='doc' and c.dep=a.client and rownum=1),14),p_user_id
   from
   (
-   select dep sc0,0 sc1,sum(suma) sum0,sum(cant) sum1,sum(price) sum2,sum(sumaval) sum3,sum(sumagaap) sum4,sum(cant1) sum5,null cant0
-   from xsld
-   where id='doc'
-   group by /*cont,*/dep
-  ) x 
-  group by sc0,sc1
- ) a
- --where nvl(TOTAL,0)>0            
- group by client,punct;
+   select sc0 client,sc1 punct
+    ,nvl(sum(sum5),0) suma35
+    ,nvl(sum(sum4),0) suma28
+    ,nvl(sum(sum3),0) suma21
+    ,nvl(sum(sum2),0) suma14
+    ,nvl(sum(sum1),0) suma7
+    ,nvl(sum(sum0),0) total_dat
+   from
+   (
+    select dep sc0,0 sc1,sum(suma) sum0,sum(cant) sum1,sum(price) sum2,sum(sumaval) sum3,sum(sumagaap) sum4,sum(cant1) sum5
+    from xsld
+    where id='doc'
+    group by dep
+   ) x
+   group by sc0,sc1
+  ) a
+  --where nvl(TOTAL,0)>0
+  group by client,punct;
+ end if;
  --write_log(p_start,'prepare_debitori 19');
  --
- insert into yrb_debtitori_detail (client,id_punct,nrdoc,doc_name,data,nrmanual,cont,doc_s7,doc_s14,doc_s21,doc_s28,doc_s35,sum_plata,sum_dat_exp,sum_tot_doc,user_id)
- select dep,sc1,nrdoc,case when cont=2211 and nrdoc is not null then 'Factura' else 'Sold' end doc_name
-  ,data,nrmanual,cont,doc1_1,doc2_1,doc3_1,doc4_1,doc5_1,doc0_1,sum_dat_exp,nvl(sum_dat_exp,0)+nvl(doc0_1,0),v_user_id
- from
- (
-  select dep,sc1,nrdoc,trunc(data) data,(select nrmanual from tmdb_docs where cod=x.nrdoc) nrmanual
-   ,to_number(cont) cont
-   ,(select suma from xsld s where nvl(s.nrdoc,0)=nvl(x.nrdoc,0) and s.dep=x.dep and s.sc1=x.sc1 and s.cont=2211 and id='SUMADT') suma_fact
-   ,cant doc1_1,price doc2_1,sumaval doc3_1,sumagaap doc4_1,cant1 doc5_1,nvl(suma,0)-nvl(cant,0)-nvl(price,0)-nvl(sumaval,0)-nvl(sumagaap,0)-nvl(cant1,0) as doc0_1 
-   ,nvl(cant,0)+nvl(price,0)+nvl(sumaval,0)+nvl(sumagaap,0)+nvl(cant1,0) sum_dat_exp
-  from xsld x
-  where id='doc'
-  order by data desc,nrdoc desc
- )a;
+ if p_insert_detail then
+  insert into yrb_debtitori_detail (client,id_punct,nrdoc,doc_name,data,nrmanual,cont,doc_s7,doc_s14,doc_s21,doc_s28,doc_s35,sum_plata,sum_dat_exp,sum_tot_doc,user_id)
+  select dep,sc1,nrdoc,case when cont=2211 and nrdoc is not null then 'Factura' else 'Sold' end doc_name
+   ,data,nrmanual,cont,doc1_1,doc2_1,doc3_1,doc4_1,doc5_1,doc0_1,sum_dat_exp,nvl(sum_dat_exp,0)+nvl(doc0_1,0),p_user_id
+  from
+  (
+   select dep,sc1,nrdoc,trunc(data) data,(select nrmanual from tmdb_docs where cod=x.nrdoc) nrmanual
+    ,to_number(cont) cont
+    ,(select suma from xsld s where nvl(s.nrdoc,0)=nvl(x.nrdoc,0) and s.dep=x.dep and s.sc1=x.sc1 and s.cont=2211 and id='SUMADT') suma_fact
+    ,cant doc1_1,price doc2_1,sumaval doc3_1,sumagaap doc4_1,cant1 doc5_1,nvl(suma,0)-nvl(cant,0)-nvl(price,0)-nvl(sumaval,0)-nvl(sumagaap,0)-nvl(cant1,0) as doc0_1
+    ,nvl(cant,0)+nvl(price,0)+nvl(sumaval,0)+nvl(sumagaap,0)+nvl(cant1,0) sum_dat_exp
+   from xsld x
+   where id='doc'
+   order by data desc,nrdoc desc
+  )a;
+ end if;
  --
- write_log(p_start,'prepare_debitori done');
+ --write_log(p_start,'prepare_debitori done');
 end;
 --------------------------------------------------------------------------------
-procedure prepare_sld(p_start date)is
+/*procedure prepare_sld(p_start date)is
  --
  procedure prepare_sld_puncts is
   v_user_id int;
@@ -308,7 +329,7 @@ procedure prepare_sld(p_start date)is
   v_user_id:=sys_context('envun4','param_userid');
   --
   begin
-   select id into v_agent_id from vms_order_agents where cod_user=v_user_id /*and um='P'*/;
+   select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
   exception when no_data_found then
    msg('Agent USERID='||v_user_id||' not found');
   end;
@@ -356,19 +377,30 @@ begin
  write_log(p_start,'prepare_sld_puncts done');
  prepare_sld_turnover;
  write_log(p_start,'prepare_sld_turnover done');
-end;
---------------------------------------------------------------------------------
-/*procedure prepare_debitori is
-begin
- pg_orders_web_xml.prepare_debitori;
- write_log('prepare_debitori');
-end;
---------------------------------------------------------------------------------
-procedure prepare_sld is
-begin
- pg_orders_web_xml.prepare_sld;
- write_log('prepare_sld');
 end;*/
+--------------------------------------------------------------------------------
+function query_puncts(p_agent_id int) return long is
+ v_company_id int;
+ v_sql long;
+begin
+ --
+ if get_orders_prop_bool('SelectClientsByRoutes') then
+  v_company_id:=un$nrset.get_company_id(sys_context('envun4','param_nrsetdefault'));
+  v_sql:='select m.cod,m.client,m.parent_cod,m.id_ruta
+   from vms_order_clients_gr m,vms_order_route_agents a
+   where a.main_agent=''P''
+     and a.id_ruta=m.id_ruta
+     and a.id_agent='||p_agent_id||case when v_company_id>0 then '
+     and a.nrset=m.nrset and m.nrset='||v_company_id end||'
+     and sysdate between a.datas and a.datae';
+ else
+  v_sql:='select cod,client,parent_cod,id_ruta
+     from vms_order_clients
+     where agent='||p_agent_id||' and inactiv is null and id_ruta is not null';
+ end if;
+ --
+ return v_sql;
+end;
 --------------------------------------------------------------------------------
 procedure store_markets(p_state in out nocopy web_json.t_fill_state) is
 begin
@@ -435,80 +467,53 @@ begin
  --write_log(p_start,'store_routes');
 end;
 --------------------------------------------------------------------------------
-procedure datorii_client(p_state in out nocopy web_json.t_fill_state) is
- v_user_id int:=sys_context('envun4','param_userid');
- v_agent int;
-begin
- select id into v_agent from vms_order_agents where cod_user=v_user_id;
- --
- web_json.add_subnode_array(p_state,'datorii');
- web_json.begin_subnodes(p_state);
- --
- for p in (
-  select id_client,(select client from vms_order_clients where cod=id_client) client_name,zile,user_id
-   ,sum(suma7)suma7,sum(suma14)suma14 ,sum(suma21)suma21,sum(suma28)suma28,sum(suma35)suma35
-   ,sum(total)total,sum(total_dat)total_dat,sum(tot_plata)tot_plata
-  from yrb_debtitori where user_id=v_user_id
-  group by id_client,zile,user_id
- )
- loop
-  web_json.add_subnode_object(p_state);
-  web_json.begin_subnodes(p_state);
-   web_json.add_subnode_number(p_state,'i',p.id_client);
-   web_json.add_subnode_string(p_state,'n',p.client_name);
-   web_json.add_subnode_optional_number(p_state,'z',p.zile);
-   web_json.add_subnode_optional_number(p_state,'u',p.user_id);
-   web_json.add_subnode_optional_number(p_state,'s1',p.suma7);
-   web_json.add_subnode_optional_number(p_state,'s2',p.suma14);
-   web_json.add_subnode_optional_number(p_state,'s3',p.suma21);
-   web_json.add_subnode_optional_number(p_state,'s4',p.suma28);
-   web_json.add_subnode_optional_number(p_state,'s5',p.suma35);
-   web_json.add_subnode_optional_number(p_state,'tot',p.total);
-   web_json.add_subnode_optional_number(p_state,'tot_dat',p.total_dat);
-   web_json.add_subnode_optional_number(p_state,'tot_plata',p.tot_plata);
-  web_json.end_subnodes(p_state);
- end loop;
- --
- web_json.end_subnodes(p_state);
- --write_log(p_start,'datorii_client');
-end;
---------------------------------------------------------------------------------
 procedure store_puncts(p_state in out nocopy web_json.t_fill_state) is
  v_company_id int:=un$nrset.get_company_id(sys_context('envun4','param_nrsetdefault'));
  v_user_id int:=sys_context('envun4','param_userid');
  v_agent_id int;
+ TYPE t_cusor IS REF CURSOR;
+ v_cursor t_cusor;
+ v_sql long;
+ v_punct_id tms_univers.cod%type;
+ v_punct_name tms_univers.denumirea%type;
+ v_parent_id tms_univers.cod%type;
+ v_route_id tms_univers.cod%type;
+ v_addr_fact tms_org.addr_fact%type;
+ v_address tms_org.adress%type;
+ v_telefon tms_org.telefon%type;
+ v_telprim tms_org.telprim%type;
+ v_director tms_org.director%type;
 begin
  select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
  --
- web_json.add_subnode_array(p_state,'puncts');
- web_json.begin_subnodes(p_state);
- for p in (
-  select m.cod,m.client,m.parent_cod,m.id_ruta,o.addr_fact
+ v_sql:=query_puncts(v_agent_id);
+ --
+ v_sql:='select m.cod,m.client,m.parent_cod,m.id_ruta,o.addr_fact
   ,nvl(o.adress,p.adress)address,nvl(o.telefon,p.telefon)telefon
   ,nvl(o.telprim,p.telprim)telprim,nvl(o.director,p.director)director
-  from vms_order_clients_gr m,vms_org o,vms_org p,vms_order_route_agents a
-  where m.id_ruta=a.id_ruta
-    and m.nrset=a.nrset
-    and o.cod=m.cod
+  from ('||v_sql||') m,vms_org o,vms_org p
+  where o.cod=m.cod
     and p.cod(+)=m.parent_cod
-    and a.id_agent=v_agent_id
-    and a.nrset=v_company_id
-    and sysdate between a.datas and a.datae
-    and a.main_agent='P'
-  order by m.client,m.cod
- )
+  order by m.client,m.cod';
+ --
+ web_json.add_subnode_array(p_state,'puncts');
+ web_json.begin_subnodes(p_state);
+ --
+ open v_cursor for v_sql;
  loop
+  fetch v_cursor into v_punct_id,v_punct_name,v_parent_id,v_route_id,v_addr_fact,v_address,v_telefon,v_telprim,v_director;
+  exit when v_cursor%notfound;
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
-   web_json.add_subnode_number(p_state,'i',p.cod);
-   web_json.add_subnode_string(p_state,'n',p.client);
-   web_json.add_subnode_number(p_state,'r',p.id_ruta);
-   web_json.add_subnode_optional_number(p_state,'p',p.parent_cod);
-   web_json.add_subnode_optional_string(p_state,'addr_fact',p.addr_fact);
-   web_json.add_subnode_optional_string(p_state,'address',p.address);
-   web_json.add_subnode_optional_string(p_state,'telefon',p.telefon);
-   web_json.add_subnode_optional_string(p_state,'telprim',p.telprim);
-   web_json.add_subnode_optional_string(p_state,'director',p.director);
+   web_json.add_subnode_number(p_state,'i',v_punct_id);
+   web_json.add_subnode_string(p_state,'n',v_punct_name);
+   web_json.add_subnode_number(p_state,'r',v_route_id);
+   web_json.add_subnode_optional_number(p_state,'p',v_parent_id);
+   web_json.add_subnode_optional_string(p_state,'addr_fact',v_addr_fact);
+   web_json.add_subnode_optional_string(p_state,'address',v_address);
+   web_json.add_subnode_optional_string(p_state,'telefon',v_telefon);
+   web_json.add_subnode_optional_string(p_state,'telprim',v_telprim);
+   web_json.add_subnode_optional_string(p_state,'director',v_director);
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -916,6 +921,131 @@ begin
  web_json.end_subnodes(v_state);
  --
  commit;
+ --
+ write_log(v_start,'export_database('||p_session||') end');
+end;
+--------------------------------------------------------------------------------
+procedure report_debt(p_session int) is
+ v_start date:=sysdate;
+ v_state web_json.t_fill_state;
+ v_user_id int:=sys_context('envun4','param_userid');
+ --
+begin
+ start_log('report_debt('||p_session||')');
+ --
+ prepare_debitori(v_user_id,true,false);
+ --
+ web_json.create_top_node_object(v_state);
+ web_json.begin_subnodes(v_state);
+ --
+ web_json.add_subnode_array(v_state,'data');
+ web_json.begin_subnodes(v_state);
+ --
+ for p in (
+  select id_client,(select client from vms_order_clients where cod=id_client) client_name,zile,user_id
+   ,sum(suma7)suma7,sum(suma14)suma14 ,sum(suma21)suma21,sum(suma28)suma28,sum(suma35)suma35
+   ,sum(total)total,sum(total_dat)total_dat,sum(tot_plata)tot_plata
+  from yrb_debtitori where user_id=v_user_id
+  group by id_client,zile,user_id
+ )
+ loop
+  web_json.add_subnode_object(v_state);
+  web_json.begin_subnodes(v_state);
+   web_json.add_subnode_number(v_state,'i',p.id_client);
+   web_json.add_subnode_string(v_state,'n',p.client_name);
+   web_json.add_subnode_optional_number(v_state,'z',p.zile);
+   web_json.add_subnode_optional_number(v_state,'s1',p.suma7);
+   web_json.add_subnode_optional_number(v_state,'s2',p.suma14);
+   web_json.add_subnode_optional_number(v_state,'s3',p.suma21);
+   web_json.add_subnode_optional_number(v_state,'s4',p.suma28);
+   web_json.add_subnode_optional_number(v_state,'s5',p.suma35);
+   web_json.add_subnode_optional_number(v_state,'tot',p.total);
+   web_json.add_subnode_optional_number(v_state,'dat',p.total_dat);
+   web_json.add_subnode_optional_number(v_state,'plata',p.tot_plata);
+  web_json.end_subnodes(v_state);
+ end loop;
+ --
+ web_json.end_subnodes(v_state);
+ --
+ web_json.end_subnodes(v_state);
+ --
+ write_log(v_start,'report_debt('||p_session||') end');
+end;
+--------------------------------------------------------------------------------
+procedure report_plan(p_session int) is
+ v_start date:=sysdate;
+ v_state web_json.t_fill_state;
+ v_user_id int:=sys_context('envun4','param_userid');
+ v_agent_id int;
+ TYPE t_cusor IS REF CURSOR;
+ v_cursor t_cusor;
+ v_sql long;
+ v_punct_id tms_univers.cod%type;
+ v_punct_name tms_univers.denumirea%type;
+ v_product_id tms_univers.cod%type;
+ v_product_name tms_univers.denumirea%type;
+ v_suma number;
+ v_cant_buc number;
+ v_cant number;
+ v_plan number;
+ --
+begin
+ start_log('report_plan('||p_session||')');
+ --
+ select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
+ --
+ v_sql:=rep_vinz_proizv_new(trunc(sysdate,'mm'),last_day(trunc(sysdate,'mm')));
+ --
+ v_sql:='select punct,clcpunctt,t_marf_id,t_marf
+    , sum(case when tip_vinz_lei=''P'' then suma end) suma_lei
+    , sum(case when tip_vinz_buc=''P'' then cant_buc end) cant_buc
+    , sum(case when tip_vinz_kg=''P'' then cant end) cant
+    , sum(suma_plan_vanzari) suma_plan_vanzari
+    from (
+      select a.*
+      , (select tip_vinz_buc from tms_arborem t where t.id=t_marf_id) tip_vinz_buc
+      , (select tip_vinz_kg from tms_arborem t where t.id=t_marf_id) tip_vinz_kg
+      , (select tip_vinz_lei from tms_arborem t where t.id=t_marf_id) tip_vinz_lei
+      from ('||v_sql||') a
+    ) a
+    where agent='||v_agent_id||'
+    having sum(case when tip_vinz_lei=''P'' then suma end)<>0
+        or sum(case when tip_vinz_buc=''P'' then cant_buc end)<>0
+        or sum(case when tip_vinz_kg=''P'' then cant end)<>0
+        or sum(suma_plan_vanzari)<>0
+    group by agent, clcagentt, punct, clcpunctt, t_marf_id, t_marf, tip_vinz_buc, tip_vinz_kg, tip_vinz_lei';
+ --
+ write_log(v_start,'report_plan('||p_session||') sql');
+ --
+ web_json.create_top_node_object(v_state);
+ web_json.begin_subnodes(v_state);
+ --
+ web_json.add_subnode_array(v_state,'data');
+ web_json.begin_subnodes(v_state);
+ --
+ open v_cursor for v_sql;
+ loop
+  fetch v_cursor into v_punct_id,v_punct_name,v_product_id,v_product_name,v_suma,v_cant_buc,v_cant,v_plan;
+  exit when v_cursor%notfound;
+  web_json.add_subnode_object(v_state);
+  web_json.begin_subnodes(v_state);
+   web_json.add_subnode_number(v_state,'c',v_punct_id);
+   web_json.add_subnode_string(v_state,'cn',v_punct_name);
+   web_json.add_subnode_number(v_state,'p',v_product_id);
+   web_json.add_subnode_string(v_state,'pn',v_product_name);
+   web_json.add_subnode_optional_number(v_state,'suma',v_suma);
+   web_json.add_subnode_optional_number(v_state,'cbuc',v_cant_buc);
+   web_json.add_subnode_optional_number(v_state,'cant',v_cant);
+   web_json.add_subnode_optional_number(v_state,'plan',v_plan);
+  web_json.end_subnodes(v_state);
+ end loop;
+ close v_cursor;
+ --
+ web_json.end_subnodes(v_state);
+ --
+ web_json.end_subnodes(v_state);
+ --
+ write_log(v_start,'report_plan('||p_session||') end');
 end;
 --------------------------------------------------------------------------------
 procedure say(p_response clob)is
@@ -952,5 +1082,4 @@ begin
 end;
 --------------------------------------------------------------------------------
 end;
-
 /

@@ -61,14 +61,20 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 
 .collection.with-header
 {border-radius:var(--collection-radius)}
-.collection.with-header .collection-header
+.collection.with-header .collection-header:first-child
 {border-radius:var(--collection-radius) var(--collection-radius) 0 0}
 .collection.with-header .collection-item:last-child
 {border-radius:0 0 var(--collection-radius) var(--collection-radius)}
 
-.last.row {margin-bottom:0}
+.collection .collection-item,.collection .collection-group,.collection.with-header .collection-item {padding:10px}
 .row .col {overflow:hidden;text-overflow:ellipsis}
+
+.row.low,.collection .collection-item.low,.collection .collection-group.low,
+.collection.with-header .collection-item.low,.collection.with-header .collection-header.low {padding-top:2px;padding-bottom:2px;margin-bottom:0}
+.wide.row,.collection.with-header .collection-item.wide,.collection.with-header .collection-header.wide {padding-left:5px;padding-right:5px}
 .wide.row .col {padding:0}
+.last.row {margin-bottom:0}
+
 
 a.js[onclick] {cursor:pointer}
 a.js[onclick]:hover {text-decoration:underline}
@@ -92,7 +98,6 @@ body[searching] .modal.searching {display:initial}
 .collection .collection-item {line-height:initial}
 .collection.with-header .collection-header {overflow:hidden}
 .collection.with-header .collection-header a {text-decoration:underline}
-.collection.with-header .collection-item {padding-left:20px}
 
 
 body:not([signed]) .signed, body[signed] .unsigned {display:none}
@@ -130,6 +135,9 @@ body:not([signed]) .page-header .nav-signed i {width:0}
 #page-main .card-panel {margin:10vh auto}
 #page-main .card-panel a {overflow:hidden}
 @media only screen and (max-width: 992px) {#page-main .card-panel a {padding:10px 0}}
+
+#page-report_debts .row {font-size:0.8em}
+@media only screen and (max-width: 992px) {#page-report_debts .row {font-size:0.6em}}
 
 #page-msgs .card-panel.list {margin:10vh auto}
 #page-msgs .card-panel.fallback {display:table;margin:30vh auto}

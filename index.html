@@ -73,11 +73,11 @@
 
 <div v-if="d.p.name=='main'" id="page-main">
 <div class="card-panel hoverable collection no-wrap flow-text no-select"
- :js1="(d.t.no=d.a.data.doc?d.a.data.doc.filter(d=>!d.nr).length:0)&&null||null"
- :js2="(d.t.nd=d.a.data.doc?d.a.data.doc.filter(d=>d.nr).length:0)&&null||null"
- :js3="(d.t.nr=d.a.data.lst.routes?d.a.data.lst.routes.length:0)&&null||null"
- :js4="(d.t.nc=d.a.data.lst.puncts?d.a.data.lst.puncts.length:0)&&null||null"
- :js5="(d.t.np=d.a.data.lst.products?d.a.data.lst.products.length:0)&&null||null">
+ :js1="(d.t.no=d.a.data.doc?d.a.data.doc.filter(d=>!d.nr).length:0)?null:null"
+ :js2="(d.t.nd=d.a.data.doc?d.a.data.doc.filter(d=>d.nr).length:0)?null:null"
+ :js3="(d.t.nr=d.a.data.lst.routes?d.a.data.lst.routes.length:0)?null:null"
+ :js4="(d.t.nc=d.a.data.lst.puncts?d.a.data.lst.puncts.length:0)?null:null"
+ :js5="(d.t.np=d.a.data.lst.products?d.a.data.lst.products.length:0)?null:null">
 <a class="js collection-item" onclick="app.showPageServerData()">
  <span class="bold">{{tr('Data loaded')}}:</span>
  <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}}</span>
@@ -101,6 +101,9 @@
 <a v-if="d.t.np" class="js collection-item" onclick="app.showSubPage('products')">
  <span class="bold">{{tr('Products')}}:</span>
  <span class="right">{{d.t.np||tr('No data')}}</span>
+</a>
+<a class="js collection-item" onclick="app.showSubPage('reports')">
+ <span class="bold">{{tr('Reports')}}:</span>
 </a>
 </div>
 </div>
@@ -142,33 +145,33 @@
 
 <div v-if="d.p.name=='client'" id="page-client">
 <div class="collection with-header flow-text no-select"
- :js1="(d.t.PO=d.a.data.lst.orders?d.a.data.lst.orders.filter(p=>p.pt==d.p.data.id&&!d.a.data.doc.find(o=>o.po==p.i)):[])&&null"
- :js2="(d.t.OO=d.a.data.doc.filter(o=>o.pt==d.p.data.id&&!o.nr))&&null"
- :js3="(d.t.SO=d.a.data.doc.filter(o=>o.pt==d.p.data.id&&o.nr))&&null">
+ :js1="(d.t.PO=d.a.data.lst.orders?d.a.data.lst.orders.filter(p=>p.pt==d.p.data.id&&!d.a.data.doc.find(o=>o.po==p.i)):[])?null:null"
+ :js2="(d.t.OO=d.a.data.doc.filter(o=>o.pt==d.p.data.id&&!o.nr))?null:null"
+ :js3="(d.t.SO=d.a.data.doc.filter(o=>o.pt==d.p.data.id&&o.nr))?null:null">
 <div class="collection-header caption">
  <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
  <span class="left">{{d.p.data.punct.n}}</span>
 </div>
-<div v-if="d.p.data.punct.addr_fact" class="collection-item wide row">
+<div v-if="d.p.data.punct.addr_fact" class="collection-item row">
  <div class="col s12 l6 caption">{{tr('Actual address')}}:</div>
  <div class="col s12 l6">{{d.p.data.punct.addr_fact}}</div>
 </div>
-<div v-if="d.p.data.punct.address" class="collection-item wide row">
+<div v-if="d.p.data.punct.address" class="collection-item row">
  <div class="col s12 l6 caption">{{tr('Formal address')}}:</div>
  <div class="col s12 l6">{{d.p.data.punct.address}}</div>
 </div>
-<div v-if="d.p.data.punct.telefon||d.p.data.punct.telprim" class="collection-item wide row">
+<div v-if="d.p.data.punct.telefon||d.p.data.punct.telprim" class="collection-item row">
  <div class="col s12 l6 caption">{{tr('Phone number')}}:</div>
  <div class="col s12 l6">{{d.p.data.punct.telefon}} {{d.p.data.punct.telefon&&d.p.data.punct.telprim&&'/'}} {{d.p.data.punct.telprim}}</div>
 </div>
-<div v-if="d.p.data.punct.director" class="collection-item wide row">
+<div v-if="d.p.data.punct.director" class="collection-item row">
  <div class="col s12 l6 caption">{{tr('Director')}}:</div>
  <div class="col s12 l6">{{d.p.data.punct.director}}</div>
 </div>
 </div>
 <div v-if="d.t.PO.length" class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Pre-Orders')}}</div>
-<a v-for="o in d.t.PO" class="js collection-item wide row" :onclick="'app.newOrder('+o.i+')'">
+<a v-for="o in d.t.PO" class="js collection-item row" :onclick="'app.newOrder('+o.i+')'">
  <div class="col s3 l2 right-align">#{{o.i}}:&nbsp;</div>
  <div class="col s3 l2">{{fmtd(o.dt)}}</div>
  <div class="col s6 l8">{{o.tp&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.tp))}}</div>
@@ -178,7 +181,7 @@
 <div class="collection-header caption">{{tr('Orders to export')}}
  <a class="js waves-effect waves-light btn right" onclick="app.newOrder()"><i class="material-icons">add</i></a>
 </div>
-<a v-for="o in d.t.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
+<a v-for="o in d.t.OO" class="js collection-item row" :onclick="'app.showOrder('+o.id+')'">
  <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check_box':'check_box_outline_blank'}}</i>#{{o.id}}:&nbsp;</div>
  <div class="col s3 l2">{{fmtd(o.dt)}}</div>
  <div class="col s6 l8">{{o.tp&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.tp))}}</div>
@@ -187,7 +190,7 @@
 </div>
 <div v-if="d.t.SO.length" class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Orders exported')}}</div>
-<a v-for="o in d.t.SO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
+<a v-for="o in d.t.SO" class="js collection-item row" :onclick="'app.showOrder('+o.id+')'">
  <div class="col s3 l2 right-align">#{{o.nr}}:&nbsp;</div>
  <div class="col s3 l2">{{fmtd(o.dt)}}</div>
  <div class="col s6 l8">{{o.tp&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.tp))}}</div>
@@ -197,8 +200,8 @@
 
 <div v-if="d.p.name=='products'" id="page-products">
 <div class="collection with-header flow-text no-select"
- :js1="(d.t.GG=d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)))&&null"
- :js2="(d.t.PP=d.a.data.lst.products.filter(p=>p.gr==d.p.data.id))&&null">
+ :js1="(d.t.GG=d.a.data.lst.groups.filter(g=>g.p==(d.p.data.id||0)))?null:null"
+ :js2="(d.t.PP=d.a.data.lst.products.filter(p=>p.gr==d.p.data.id))?null:null">
 <div class="collection-header caption right-align">
  <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
@@ -208,14 +211,14 @@
  <div class="col s4 l2 right-align">[{{tr('products')}}]</div>
  <div class="col s4 l2 right-align">[{{tr('total')}}]</div>
 </div>
-<a v-for="g in d.t.GG" class="js collection-item wide row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
+<a v-for="g in d.t.GG" class="js collection-item row" :onclick="'app.showSubPage(\'products\','+g.i+')'">
  <div class="col s12 l6">[{{g.n}}]</div>
  <div class="col s4 l2 right-align">{{g.cg&&('['+g.cg+']')}}</div>
  <div class="col s4 l2 right-align">{{g.cp&&('['+g.cp+']')}}</div>
  <div class="col s4 l2 right-align">{{g.cpp&&('['+g.cpp+']')}}</div>
 </a>
 <div v-if="d.t.GG.length&&d.t.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
-<div v-for="p in d.t.PP" class="collection-item wide row">
+<div v-for="p in d.t.PP" class="collection-item row">
  <div class="col s12 l8">{{p.i}}: {{p.n}}</div>
  <div class="col s8 l2 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
  <div class="col s4 l2">&nbsp;({{p.um}})</div>
@@ -226,7 +229,7 @@
 
 <div v-if="d.p.name=='docs'" id="page-docs">
 <div class="collection with-header flow-text no-select"
- :js1="(d.t.OO=d.a.data.doc.filter(o=>o.nr))&&null">
+ :js1="(d.t.OO=d.a.data.doc.filter(o=>o.nr))?null:null">
 <div class="collection-header caption right-align">
  <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
@@ -241,12 +244,12 @@
 
 <div v-if="d.p.name=='orders'" id="page-orders">
 <div class="collection with-header flow-text no-select"
- :js1="(d.t.OO=d.a.data.doc.filter(o=>!o.nr))&&null"
- :js2="(d.t.OR=d.t.OO.filter(o=>o.ready))&&null">
+ :js1="(d.t.OO=d.a.data.doc.filter(o=>!o.nr))?null:null"
+ :js2="(d.t.OR=d.t.OO.filter(o=>o.ready))?null:null">
 <div class="collection-header caption right-align">
  <a :class="d.p.data&&d.p.data.back?'js':null" :onclick="d.p.data&&d.p.data.back?'app.showSuperPage()':null"><i v-if="d.p.data&&d.p.data.back" class="material-icons">arrow_upward</i>{{d.p.data&&d.p.data.back?d.p.data.back.title:'&nbsp;'}}</a>
 </div>
-<a v-for="o in d.t.OO" class="js collection-item wide row" :onclick="'app.showOrder('+o.id+')'">
+<a v-for="o in d.t.OO" class="js collection-item row" :onclick="'app.showOrder('+o.id+')'">
  <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check_box':'check_box_outline_blank'}}</i>#{{o.id}}:&nbsp;</div>
  <div class="col s3 l2">{{fmtd(o.dt)}}</div>
  <div class="col s6 l8">{{oval(d.a.data.lst.puncts.find(p=>p.i==o.pt))}}</div>
@@ -262,26 +265,26 @@
 
 <div v-if="d.p.name=='order'" id="page-order">
 <div class="collection with-header flow-text no-select"
- :js0="(d.t.T=d.a.data.lst.doctypes)&&null"
- :js1="(d.t.D=new Date(d.p.data.date))&&null"
- :js2="(d.p.data.ex&&(d.t.E=new Date(d.p.data.ex)))&&null"
- :js3="(d.t.N=new Date(curD()))&&null"
- :js4="(d.t.O=Math.floor((d.t.D-d.t.N)/86400000))&&null"
- :js5="(d.t.E&&(d.t.En=Math.floor((d.t.E-d.t.N)/86400000)))&&null"
- :js6="(d.t.P=docpp())&&null">
+ :js0="(d.t.T=d.a.data.lst.doctypes)?null:null"
+ :js1="(d.t.D=new Date(d.p.data.date))?null:null"
+ :js2="(d.p.data.ex&&(d.t.E=new Date(d.p.data.ex)))?null:null"
+ :js3="(d.t.N=new Date(curD()))?null:null"
+ :js4="(d.t.O=Math.floor((d.t.D-d.t.N)/86400000))?null:null"
+ :js5="(d.t.E&&(d.t.En=Math.floor((d.t.E-d.t.N)/86400000)))?null:null"
+ :js6="(d.t.P=docpp())?null:null">
 <div class="collection-header caption">
  <div v-if="d.p.data.nrdoc" class="left">#{{d.p.data.nrdoc}}</div>
  <div v-else-if="d.p.data.po" class="left">#{{d.p.data.po}}</div>
  <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
 </div>
-<div v-if="d.t.T&&d.t.T.length" class="collection-item wide row">
+<div v-if="d.t.T&&d.t.T.length" class="collection-item row">
  <div class="col s12 l6 caption">{{tr('Order type')}}:</div>
  <div class="col s12 l6 right-align">
   <span :class="d.p.data.type?null:'red-text'">{{!d.p.data.type?tr('Choose the order type'):(oval(d.t.T.find(t=>t.i==d.p.data.type))||(tr('Unknown order type')+': '+d.p.data.type))}}</span>
   <a v-if="!d.p.data.nrdoc" class="js waves-effect waves-light btn icon" onclick="app.editDocType()"><i class="material-icons">dehaze</i></a>
  </div>
 </div>
-<div class="collection-item wide row">
+<div class="collection-item row">
  <div class="col s8 l6 caption">{{tr('Delivery date')}}:</div>
  <div class="col s4 l2">({{d.t.O>1?('+'+d.t.O+' '+tr('days')):d.t.O==1?tr('tomorrow'):d.t.O==0?tr('today'):tr('expired')}})</div>
  <div class="col s12 l4 right-align">
@@ -290,7 +293,7 @@
   <a v-if="!d.p.data.nrdoc" class="js waves-effect waves-light btn icon" onclick="app.orderNextDate()"><i class="material-icons">exposure_plus_1</i></a>
  </div>
 </div>
-<div v-if="d.t.E" class="collection-item wide row">
+<div v-if="d.t.E" class="collection-item row">
  <div class="col s8 l6 caption">{{tr('Expiration date')}}:</div>
  <div class="col s4 l2">({{d.t.En>1?('+'+d.t.En+' '+tr('days')):d.t.En==1?tr('tomorrow'):d.t.En==0?tr('today'):tr('expired')}})</div>
  <div class="col s12 l4 right-align">
@@ -314,7 +317,7 @@
 <div class="collection-header caption">{{tr('Products')}}
  <a v-if="!d.p.data.nrdoc" class="js waves-effect waves-light btn right" onclick="app.addProducts()"><i class="material-icons">add</i></a>
 </div>
-<a v-for="p in d.t.P" :class="p.g?'collection-group center':'js collection-item wide row'"
+<a v-for="p in d.t.P" :class="p.g?'collection-group center':'js collection-item row'"
   :onclick="p.g||d.p.data.nrdoc?null:'app.editProductQty('+p.i+')'">
  <div v-if="p.g" class="collection-group center bold">{{p.n}}</div>
  <div v-if="!p.g" class="col s12 l9">{{p.i}}: {{p.n}}</div>
@@ -326,6 +329,79 @@
 </div>
 <div v-if="d.p.data.id&&!d.p.data.nrdoc" class="right-align">
  <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.deleteOrder()">{{tr('Delete')}}</a>
+</div>
+</div>
+
+<div v-if="d.p.name=='reports'" id="page-reports"
+ :js1="(d.t.dts=d.a.data.rep.debt&&fmtdT(d.a.data.rep.debt.ts))?null:null"
+ :js2="(d.t.pts=d.a.data.rep.plan&&fmtdT(d.a.data.rep.plan.ts))?null:null"
+>
+<div class="collection with-header flow-text no-select">
+<div class="collection-header caption right-align">
+ <a class="js" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{d.p.data.back.title}}</a>
+</div>
+<a class="js collection-item" onclick="app.showSubPage('report_debts')">
+ <span class="bold">{{tr('Client Debts')}}:</span>
+ <span class="right">{{d.t.dts||tr('No data')}}</span>
+</a>
+<a class="js collection-item" onclick="app.showSubPage('report_plans')">
+ <span class="bold">{{tr('Sales Plans')}}:</span>
+ <span class="right">{{d.t.pts||tr('No data')}}</span>
+</a>
+</div>
+</div>
+
+<div v-if="d.p.name=='report_debts'" id="page-report_debts">
+<div class="collection with-header flow-text no-select"
+ :js1="(d.t.R=d.a.data.rep.debt||{})?null:null"
+ :js2="(d.t.D=d.t.R.d||[])?null:null"
+>
+<div class="collection-header caption">
+ <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{oval(d.p.data.back.data,'title')||oval(d.p.data.back,'title')}}</a>
+</div>
+<div class="collection-item" style="overflow:hidden">
+ <span class="caption">{{tr('Data loaded')}}:</span>
+ <span class="right">{{d.t.R.ts?fmtdT(d.t.R.ts):tr('No data')}} <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.dbReport('debt')"><i class="material-icons">sync</i></a></span>
+</div>
+<div v-if="d.t.D.length" class="collection-header wide low row">
+ <div class="col s6 l3">{{tr('Client')}}</div>
+ <div class="col s2 l1 right-align">{{tr('Days')}}</div>
+ <div class="col s2 l1 right-align">{{tr('Debt')}}</div>
+ <div class="col s2 l1 right-align">{{tr('Payed')}}</div>
+ <div class="col s2 l1 right-align">{{tr('1 - 7')}}</div>
+ <div class="col s2 l1 right-align">{{tr('8 - 14')}}</div>
+ <div class="col s2 l1 right-align">{{tr('15 - 21')}}</div>
+ <div class="col s2 l1 right-align">{{tr('22 - 28')}}</div>
+ <div class="col s2 l1 right-align">{{tr('29 - ...')}}</div>
+ <div class="col s2 l1 right-align">{{tr('Total')}}</div>
+</div>
+<a v-for="r in d.t.D" class="js collection-item wide low row" :onclick="'app.showSubPage(\'client\','+r.i+')'">
+ <div class="col s6 l3">{{r.n}}</div>
+ <div class="col s2 l1 right-align">{{r.z||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.dat||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.plata||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.s1||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.s2||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.s3||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.s4||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.s5||'&nbsp;'}}</div>
+ <div class="col s2 l1 right-align">{{r.tot||'&nbsp;'}}</div>
+</a>
+</div>
+</div>
+
+<div v-if="d.p.name=='report_plans'" id="page-report_plans">
+<div class="collection with-header flow-text no-select"
+ :js1="(d.t.R=d.a.data.rep.plan||{})?null:null"
+ :js2="(d.t.D=d.t.R.d||[])?null:null"
+>
+<div class="collection-header caption">
+ <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{oval(d.p.data.back.data,'title')||oval(d.p.data.back,'title')}}</a>
+</div>
+<div class="collection-item" style="overflow:hidden">
+ <span class="caption">{{tr('Data loaded')}}:</span>
+ <span class="right">{{d.t.R.ts?fmtdT(d.t.R.ts):tr('No data')}} <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.dbReport('plan')"><i class="material-icons">sync</i></a></span>
+</div>
 </div>
 </div>
 
@@ -346,7 +422,7 @@
  :js1="(d.t.N=d.p.data.node||d.a.data.lst)?null:null"
  :js2="(d.t.a=Array.isArray(d.t.N))?null:null"
  :js3="(d.t.A=d.t.a?d.t.N:Object.keys(d.t.N))&&null"
- :js4="(d.t.r=!d.t.a||typeof d.t.N[0].i=='number')&&null||null"
+ :js4="(d.t.r=!d.t.a||typeof d.t.N[0].i=='number')?null:null"
 >
 <div class="collection-header caption">
  <a class="js right" onclick="app.showSuperPage()"><i class="material-icons">arrow_upward</i>{{oval(d.p.data.back.data,'title')||oval(d.p.data.back,'title')}}</a>
@@ -357,8 +433,8 @@
  <span class="right">{{d.a.data.ts?fmtdT(d.a.data.ts):tr('No data')}} <a class="js waves-effect waves-light btn accent-bg hoverable" onclick="app.dbRefresh()"><i class="material-icons">sync</i></a></span>
 </div>
 <a v-for="(n,i) in d.t.A" class="js collection-item" :class="{row:d.t.r}"
- :js1="(d.t.n=d.t.a?n:d.t.N[n])&&null||null"
- :js2="(d.t.l=typeof d.t.n=='object')&&null||null"
+ :js1="(d.t.n=d.t.a?n:d.t.N[n])?null:null"
+ :js2="(d.t.l=typeof d.t.n=='object')?null:null"
  :onclick="d.t.l?('app.showPageServerData('+(d.t.a?i:'\''+n+'\'')+')'):null">
  <span v-if="!d.t.r">{{d.t.n}}</span>
  <div v-if="d.t.r" class="col s4" :class="{'right-align':d.t.a}">{{d.t.a?n.i:n}}:</div>

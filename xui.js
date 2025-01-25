@@ -122,7 +122,7 @@ app.transform=(text)=>{
 app.encode=text=>app.transform(app.b64encode(text))
 app.decode=text=>app.b64decode(app.transform(text))
 
-app.lsdef={ts:'',msg:[],doc:[],lst:{},rep:[]}
+app.lsdef={ts:'',msg:[],doc:[],lst:{},rep:{}}
 
 app.backup=key=>{
  if(!key)return Object.keys(app.lsdef).forEach(key=>app.backup(key))
@@ -136,7 +136,7 @@ app.restore=key=>{
  const encoded=localStorage.getItem('userdata.'+key)
  if(encoded)try{
   const decoded=app.decode(encoded)
-  const data=JSON.parse(decoded)
+  const data=(key=='rep'&&decoded=='[]')?{}:JSON.parse(decoded) // Temp hack
   app.vm.d.a.data[key]=data||app.lsdef[key]
   if(key=='msg')app.vm.d.a.not=data.filter(m=>!m.read).length
  }catch(e){
@@ -205,6 +205,8 @@ app.showPage=(name,data)=>{
   if(name=='client')app.vm.d.p.title+=' : '+value.n
   if(name=='products'&&index)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.groups.find(g=>g.i==index))
   if(name=='order'&&data.punct)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.puncts.find(p=>p.i==data.punct))
+  if(name=='report_debt'&&index)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.puncts.find(p=>p.i==index))
+  if(name=='report_plan'&&index)app.vm.d.p.title+=' : '+app.vm.ovalnd(app.vm.d.a.data.lst.puncts.find(p=>p.i==index))
  }
  if(!data)data={}
  if(!data.back)data.back={name:'main',title:tr('Current state')}
@@ -218,6 +220,9 @@ app.showPage=(name,data)=>{
  if(name=='clients')return setup(data&&data.id?'Stores':'Clients',data&&data.id)
  if(name=='client')return setup('Client',data.id,'punct',app.vm.d.a.data.lst.puncts.find(p=>p.i==data.id))
  if(name=='products')return setup('Products',data&&data.id)
+ if(name=='reports')return setup('Reports')
+ if(name=='report_debts')return setup('Client Debts')
+ if(name=='report_plans')return setup('Sales Plans')
  if(name=='serverdata')return setup('Server Data')
  if(name=='setup')return setup('Settings')
  name='main'
@@ -334,6 +339,15 @@ app.dbExport=x=>{
   app.backup('doc')
  })
  app.deleteExpired()
+}
+
+app.dbReport=name=>{
+ const request={cmd:'dbreport-'+name,usr:app.username,pwd:app.password,session:app.vm.session()}
+ app.query(request,'Refresh report data',data=>{
+  app.vm.session(data.session)
+  app.vm.d.a.data.rep[name]={ts:new Date,d:data.data}
+  app.backup('rep')
+ })
 }
 
 app.newOrder=po=>{
