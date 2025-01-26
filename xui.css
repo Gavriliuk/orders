@@ -9,6 +9,7 @@ body {opacity:1;transition:opacity 1s}
 --color-bg:#ffe;--color-fg:#004;
 --color-head:#d84;--color-ctrl:#26a69a;
 --color-accent:#a40;--color-accent2:#e40;
+--color-blocked-bg:#fcc;--color-blocked-fg:#f00;
 }
 
 /* implicit colors */
@@ -28,6 +29,9 @@ body
 .accent-fg {color:var(--color-accent)}
 .accent-bg,.accent-bg:hover:not(.hoverable) {background-color:var(--color-accent)}
 .accent-bg.hoverable:hover {background-color:var(--color-accent2)}
+
+.blocked-fg {color:var(--color-blocked-fg) !important}
+.blocked-bg,.blocked-bg:hover:not(.hoverable) {background-color:var(--color-blocked-bg) !important}
 
 #app>header,#app>footer,.collection .collection-group
 {background-color:var(--color-navi-bg);color:var(--color-navi-fg)}
@@ -66,11 +70,13 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 .collection.with-header .collection-item:last-child
 {border-radius:0 0 var(--collection-radius) var(--collection-radius)}
 
-.collection .collection-item,.collection .collection-group,.collection.with-header .collection-item {padding:10px}
+.collection .collection-item,.collection.with-header .collection-item {padding:10px}
+
 .row .col {overflow:hidden;text-overflow:ellipsis}
 
 .row.low,.collection .collection-item.low,.collection .collection-group.low,
 .collection.with-header .collection-item.low,.collection.with-header .collection-header.low {padding-top:2px;padding-bottom:2px;margin-bottom:0}
+
 .wide.row,.collection.with-header .collection-item.wide,.collection.with-header .collection-header.wide {padding-left:5px;padding-right:5px}
 .wide.row .col {padding:0}
 .last.row {margin-bottom:0}

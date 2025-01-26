@@ -307,6 +307,8 @@ app.countProducts=(G,p)=>{
  }
 }
 
+app.blockPuncts=_=>app.vm.d.a.data.lst.puncts.forEach(p=>{if(!p.blocked&&p.p)p.blocked=app.vm.oval(app.vm.d.a.data.lst.puncts.find(c=>c.i==p.p),'blocked')})
+
 app.deleteExpired=x=>{
  const now=new Date().toJSON().slice(0,10)
  app.vm.d.a.data.doc=app.vm.d.a.data.doc.filter(d=>!d.ex||d.ex>=now)
@@ -320,13 +322,15 @@ app.dbRefresh=x=>{
   app.vm.d.a.data.lst=data||structuredClone(app.lsdef)
   //app.vm.d.a.not=data.msg&&data.msg.filter?data.msg.filter(m=>!m.read).length:0
   app.countProducts()
+  app.blockPuncts()
   app.backup('lst')
   app.backup('ts')
  })
 }
 
 app.dbExport=x=>{
- const orders=app.vm.d.a.data.doc.filter(d=>!d.nr&&d.ready)
+ let orders=app.vm.d.a.data.doc.filter(d=>!d.nr&&d.ready)
+ if(app.vm.oval(app.vm.d.a.data.lst.settings,'BlockedClientDisableInput'))orders=orders.filter(o=>!app.vm.oval(app.vm.d.a.data.lst.puncts.find(p=>p.i==o.pt),'blocked'))
  if(!orders.length)return app.error(tr('No orders ready to export'))
  const doc=orders.map(d=>({id:d.id,pt:d.pt,tp:d.tp,dt:d.dt,po:d.po,p:structuredClone(d.p)}))
  const request={cmd:'dbexport',usr:app.username,pwd:app.password,session:app.vm.session(),doc:doc}
@@ -351,7 +355,8 @@ app.dbReport=name=>{
 }
 
 app.newOrder=po=>{
- if(app.vm.d.p.name!='client')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(app.vm.d.p.name!='client')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
+ if(app.vm.d.p.data.blocked&&app.vm.oval(app.vm.d.a.data.lst.settings,'BlockedClientDisableInput'))return app.error(tr('Client is blocked'))
  const data={punct:app.vm.d.p.data.id,date:app.vm.txtD(app.vm.nextD(app.vm.curD()))}
  if(po){
   data.po=po
@@ -368,17 +373,18 @@ app.showOrder=id=>{
  if(doc.ready)data.ready=true
  if(doc.nr)data.nrdoc=doc.nr
  if(doc.ex)data.ex=doc.ex
+ if(doc.nr||app.vm.oval(app.vm.d.a.data.lst.settings,'BlockedClientDisableInput')&&app.vm.oval(app.vm.d.a.data.lst.puncts.find(p=>p.i==doc.pt),'blocked'))data.readOnly=true
  app.showSubPage('order',id,data)
 }
 
 app.editDocType=x=>{
- if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(app.vm.d.p.name!='order')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
  const modal=M.Modal.getInstance(document.getElementById('modal-doctypes'))
  modal.open()
 }
 
 app.setDocType=id=>{
- if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(app.vm.d.p.name!='order')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
  M.Modal.getInstance(document.getElementById('modal-doctypes')).close()
  app.vm.d.p.data.type=id
  app.vm.$forceUpdate()
@@ -405,7 +411,7 @@ app.addProducts=x=>{
 }
 
 app.editProductQty=id=>{
- if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(app.vm.d.p.name!='order')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
  if(!app.vm.d.a.data.lst.products)return app.error('No products')
  app.vm.d.m.qty.P=app.vm.d.a.data.lst.products.find(p=>p.i==id)
  if(!app.vm.d.m.qty.P)return app.error('Product '+id+' not found')
@@ -426,7 +432,7 @@ app.setProductQty=x=>{
 }
 
 app.createOrder=close=>{
- if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(app.vm.d.p.name!='order')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
  let id=1
  app.vm.d.a.data.doc.forEach(d=>{if(d.id>=id)id=d.id+1})
  const doc={id:id,pt:app.vm.d.p.data.punct,dt:app.vm.d.p.data.date}
@@ -442,7 +448,7 @@ app.createOrder=close=>{
 }
 
 app.saveOrder=close=>{
- if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(app.vm.d.p.name!='order')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
  const doc=app.vm.d.a.data.doc.find(o=>o.id==app.vm.d.p.data.id)
  if(!doc)return app.error('Order '+app.vm.d.p.data.id+' not found')
  if(doc.dt!=app.vm.d.p.data.date)doc.dt=app.vm.d.p.data.date
@@ -455,7 +461,7 @@ app.saveOrder=close=>{
 }
 
 app.deleteOrder=async()=>{
- if(app.vm.d.p.name!='order')return app.error('Wrong page: '+app.vm.d.p.name)
+ if(app.vm.d.p.name!='order')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
  const pos=app.vm.d.a.data.doc.findIndex(o=>o.id==app.vm.d.p.data.id)
  if(pos<0)return app.error('Order '+app.vm.d.p.data.id+' not found')
  if(!await app.confirm(tr('Delete order')+'?'))return

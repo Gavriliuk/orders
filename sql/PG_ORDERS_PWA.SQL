@@ -402,6 +402,15 @@ begin
  return v_sql;
 end;
 --------------------------------------------------------------------------------
+procedure store_settings(p_state in out nocopy web_json.t_fill_state) is
+begin
+ web_json.add_subnode_object(p_state,'settings');
+ web_json.begin_subnodes(p_state);
+  web_json.add_subnode_optional_boolean(p_state,'BlockedClientDisableInput',get_orders_prop_bool('BlockedClientDisableInput'));
+ web_json.end_subnodes(p_state);
+ --write_log(p_start,'store_settings');
+end;
+--------------------------------------------------------------------------------
 procedure store_markets(p_state in out nocopy web_json.t_fill_state) is
 begin
  web_json.add_subnode_array(p_state,'markets');
@@ -514,6 +523,7 @@ begin
    web_json.add_subnode_optional_string(p_state,'telefon',v_telefon);
    web_json.add_subnode_optional_string(p_state,'telprim',v_telprim);
    web_json.add_subnode_optional_string(p_state,'director',v_director);
+   web_json.add_subnode_optional_boolean(p_state,'blocked',mod(v_punct_id,3)=0);
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -735,6 +745,8 @@ begin
  if p_session is not null then
   web_json.add_subnode_number(v_state,'session',p_session);
  end if;
+ --
+ store_settings(v_state);
  --
  --prepare_debitori(v_start);
  --prepare_sld(v_start);
