@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE PANILINO.pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 25.01.25
+-- Last modification date: 26.01.25
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -13,7 +13,7 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY PANILINO.pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 25.01.25
+-- Last modification date: 26.01.25
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
@@ -407,6 +407,7 @@ begin
  web_json.add_subnode_object(p_state,'settings');
  web_json.begin_subnodes(p_state);
   web_json.add_subnode_optional_boolean(p_state,'BlockedClientDisableInput',get_orders_prop_bool('BlockedClientDisableInput'));
+  web_json.add_subnode_optional_boolean(p_state,'UseReportSalesPlan',get_orders_prop_bool('UseReportSalesPlan'));
  web_json.end_subnodes(p_state);
  --write_log(p_start,'store_settings');
 end;
@@ -492,6 +493,7 @@ procedure store_puncts(p_state in out nocopy web_json.t_fill_state) is
  v_telefon tms_org.telefon%type;
  v_telprim tms_org.telprim%type;
  v_director tms_org.director%type;
+ v_blocked tms_org.bloc_manual_status%type;
 begin
  select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
  --
@@ -500,6 +502,7 @@ begin
  v_sql:='select m.cod,m.client,m.parent_cod,m.id_ruta,o.addr_fact
   ,nvl(o.adress,p.adress)address,nvl(o.telefon,p.telefon)telefon
   ,nvl(o.telprim,p.telprim)telprim,nvl(o.director,p.director)director
+  ,nvl(o.bloc_manual_status,p.bloc_manual_status)blocked
   from ('||v_sql||') m,vms_org o,vms_org p
   where o.cod=m.cod
     and p.cod(+)=m.parent_cod
@@ -510,7 +513,7 @@ begin
  --
  open v_cursor for v_sql;
  loop
-  fetch v_cursor into v_punct_id,v_punct_name,v_parent_id,v_route_id,v_addr_fact,v_address,v_telefon,v_telprim,v_director;
+  fetch v_cursor into v_punct_id,v_punct_name,v_parent_id,v_route_id,v_addr_fact,v_address,v_telefon,v_telprim,v_director,v_blocked;
   exit when v_cursor%notfound;
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
@@ -523,7 +526,7 @@ begin
    web_json.add_subnode_optional_string(p_state,'telefon',v_telefon);
    web_json.add_subnode_optional_string(p_state,'telprim',v_telprim);
    web_json.add_subnode_optional_string(p_state,'director',v_director);
-   web_json.add_subnode_optional_boolean(p_state,'blocked',mod(v_punct_id,3)=0);
+   web_json.add_subnode_optional_number(p_state,'blocked',v_blocked);
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);

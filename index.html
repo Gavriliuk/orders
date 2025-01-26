@@ -348,7 +348,7 @@
  <span class="bold">{{tr('Client Debts')}}:</span>
  <span class="right">{{d.t.dts||tr('No data')}}</span>
 </a>
-<a class="js collection-item" onclick="app.showSubPage('report_plans')">
+<a v-if="oval(d.a.data.lst.settings,'UseReportSalesPlan')" class="js collection-item" onclick="app.showSubPage('report_plans')">
  <span class="bold">{{tr('Sales Plans')}}:</span>
  <span class="right">{{d.t.pts||tr('No data')}}</span>
 </a>
