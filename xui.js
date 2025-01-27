@@ -22,6 +22,7 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
 ,fmtD:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric'})
 ,fmtdT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
 ,fmtDT:d=>new Date(d).toLocaleString(tr.prototype.lang,{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})
+,fmtN2:n=>Number(n).toFixed(2)
 ,docpg:x=>app.vm.d.a.data.lst.groups&&app.vm.d.a.data.lst.groups.filter(g=>!g.p).map(g=>({i:g.i,n:g.n
  ,p:app.vm.d.a.data.lst.products.filter(p=>p.gr==g.i).map(p=>({i:p.i,n:p.n,cant:p.cant,um:p.um
   ,dp:app.vm.d.p.data.products.find(dp=>dp.i==p.i)})).filter(p=>p.dp&&p.dp.q>0).map(p=>({i:p.i,n:p.n,cant:p.cant,um:p.um,q:p.dp.q}))
@@ -34,6 +35,19 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
    g.p.forEach(p=>result.push(p))
   })
   return result
+ }
+,price:(product_id,punct_id)=>{
+  const punct=app.vm.d.a.data.lst.puncts.find(p=>p.i==punct_id)
+  if(!punct)return 0
+  const client=punct.p?app.vm.d.a.data.lst.puncts.find(p=>p.i==punct.p):punct
+  if(!client)return 0
+  let price=client.pr?client.pr[product_id]:0
+  if(price)return price
+  const product=app.vm.d.a.data.lst.products.find(p=>p.i==product_id)
+  if(!product)return 0
+  price=client.pricelist&&product.pr?product.pr[client.pricelist]:0
+  if(price)return price
+  return 0
  }
 }})
 

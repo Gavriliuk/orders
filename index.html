@@ -324,10 +324,11 @@
 <a v-for="p in d.t.P" :class="p.g?'collection-group center':'js collection-item row'"
   :onclick="p.g||d.p.data.readOnly?null:'app.editProductQty('+p.i+')'">
  <div v-if="p.g" class="collection-group center bold">{{p.n}}</div>
- <div v-if="!p.g" class="col s12 l9">{{p.i}}: {{p.n}}</div>
- <div v-if="!p.g" class="col s4 l1 right-align bold accent-fg">{{p.q}}</div>
- <div v-if="!p.g" class="col s4 l1 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
- <div v-if="!p.g" class="col s4 l1">&nbsp;({{p.um}})</div>
+ <div v-if="!p.g" class="col s8 l4">{{p.i}}: {{p.n}}</div>
+ <div v-if="!p.g" class="col s4 l2 right-align bold">{{fmtN2(price(p.i,d.p.data.punct))}}</div>
+ <div v-if="!p.g" class="col s4 l2 right-align bold accent-fg">{{p.q}}</div>
+ <div v-if="!p.g" class="col s4 l2 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
+ <div v-if="!p.g" class="col s4 l2">&nbsp;({{p.um}})</div>
 </a>
 <div v-if="!d.t.P.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
@@ -442,7 +443,7 @@
  :onclick="d.t.l?('app.showPageServerData('+(d.t.a?i:'\''+n+'\'')+')'):null">
  <span v-if="!d.t.r">{{d.t.n}}</span>
  <div v-if="d.t.r" class="col s4" :class="{'right-align':d.t.a}">{{d.t.a?n.i:n}}:</div>
- <div v-if="d.t.r" class="col s8" :class="{'right-align':!d.t.a}">{{Array.isArray(d.t.n)?('['+d.t.n.length+']'):d.t.l?(d.t.n.n||(Object.keys(d.t.n)[0]+': '+d.t.n[Object.keys(d.t.n)[0]])):d.t.n}}</div>
+ <div v-if="d.t.r" class="col s8" :class="{'right-align':!d.t.a}">{{Array.isArray(d.t.n)?('['+d.t.n.length+']'):d.t.l?(d.t.n.n||(Object.keys(d.t.n).length?(Object.keys(d.t.n)[0]+': '+d.t.n[Object.keys(d.t.n)[0]]):'{-}')):d.t.n}}</div>
 </a>
 <div v-if="d.p.data.node&&!d.t.A.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
@@ -572,7 +573,8 @@
    <div v-if="d.m.products.GG.length&&d.m.products.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
    <a v-for="p in d.m.products.PP" class="js collection-item wide row"
     :onclick="'app.editProductQty('+p.i+')'">
-    <div class="col s12 l6">{{p.i}}: {{p.n}}</div>
+    <div class="col s8 l4">{{p.i}}: {{p.n}}</div>
+    <div class="col s4 l2 right-align bold">{{fmtN2(price(p.i,d.p.data.punct))}}</div>
     <div class="col s4 l2 right-align bold accent-fg">{{oval(d.p.data.products.find(t=>t.i==p.i),'q')}}</div>
     <div class="col s4 l2 right-align">{{p.cant?('x '+p.cant):''}}</div>
     <div class="col s4 l2">&nbsp;({{p.um}})</div>
@@ -591,7 +593,7 @@
   <div class="caption">{{tr('Enter product quantity')}}:</div>
   <div class="last row">
    <div class="input-field col s12 l6" style="margin:0">
-    <input id="input-quantity" type="number" class="bold accent-fg right-align" style="margin:0;font-size:inherit" :value="d.m.qty.cant"/>
+    <input id="input-quantity" type="number" class="bold accent-fg right-align" style="margin:0;font-size:inherit" :value="d.m.qty.cant" onfocus="if(this.value=='0')this.value=''"/>
     <label for="input-quantity">{{tr('Quantity')}}:</label>
    </div>
    <div class="col s6 l3" style="line-height:3rem">{{d.m.qty.P&&d.m.qty.P.cant?('x '+d.m.qty.P.cant):'&nbsp;'}}</div>
