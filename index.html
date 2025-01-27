@@ -442,7 +442,7 @@
  :onclick="d.t.l?('app.showPageServerData('+(d.t.a?i:'\''+n+'\'')+')'):null">
  <span v-if="!d.t.r">{{d.t.n}}</span>
  <div v-if="d.t.r" class="col s4" :class="{'right-align':d.t.a}">{{d.t.a?n.i:n}}:</div>
- <div v-if="d.t.r" class="col s8" :class="{'right-align':!d.t.a}">{{Array.isArray(d.t.n)?('['+d.t.n.length+']'):d.t.l?(d.t.n.n||d.t.n[Object.keys(d.t.n)[1]]):d.t.n}}</div>
+ <div v-if="d.t.r" class="col s8" :class="{'right-align':!d.t.a}">{{Array.isArray(d.t.n)?('['+d.t.n.length+']'):d.t.l?(d.t.n.n||(Object.keys(d.t.n)[0]+': '+d.t.n[Object.keys(d.t.n)[0]])):d.t.n}}</div>
 </a>
 <div v-if="d.p.data.node&&!d.t.A.length" class="collection-item center">{{tr('No data')}}</div>
 </div>

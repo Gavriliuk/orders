@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE PANILINO.pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 26.01.25
+-- Last modification date: 27.01.25
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -13,7 +13,7 @@ end;
 
 CREATE OR REPLACE PACKAGE BODY PANILINO.pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 26.01.25
+-- Last modification date: 27.01.25
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
@@ -478,7 +478,6 @@ begin
 end;
 --------------------------------------------------------------------------------
 procedure store_puncts(p_state in out nocopy web_json.t_fill_state) is
- v_company_id int:=un$nrset.get_company_id(sys_context('envun4','param_nrsetdefault'));
  v_user_id int:=sys_context('envun4','param_userid');
  v_agent_id int;
  TYPE t_cusor IS REF CURSOR;
@@ -494,6 +493,8 @@ procedure store_puncts(p_state in out nocopy web_json.t_fill_state) is
  v_telprim tms_org.telprim%type;
  v_director tms_org.director%type;
  v_blocked tms_org.bloc_manual_status%type;
+ v_pricelist varchar2(30);
+ v_opened boolean;
 begin
  select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
  --
@@ -503,6 +504,10 @@ begin
   ,nvl(o.adress,p.adress)address,nvl(o.telefon,p.telefon)telefon
   ,nvl(o.telprim,p.telprim)telprim,nvl(o.director,p.director)director
   ,nvl(o.bloc_manual_status,p.bloc_manual_status)blocked
+  ,(select codprice||chr(47)||codgrp from tcn0m_contracts
+   where clientid=m.cod and sysdate between datastart and dataend
+   and codprice is not null and codgrp is not null
+   and contractid in (select cod from tmdb_docs))pricelist
   from ('||v_sql||') m,vms_org o,vms_org p
   where o.cod=m.cod
     and p.cod(+)=m.parent_cod
@@ -513,7 +518,8 @@ begin
  --
  open v_cursor for v_sql;
  loop
-  fetch v_cursor into v_punct_id,v_punct_name,v_parent_id,v_route_id,v_addr_fact,v_address,v_telefon,v_telprim,v_director,v_blocked;
+  fetch v_cursor into v_punct_id,v_punct_name,v_parent_id,v_route_id
+   ,v_addr_fact,v_address,v_telefon,v_telprim,v_director,v_blocked,v_pricelist;
   exit when v_cursor%notfound;
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
@@ -527,6 +533,26 @@ begin
    web_json.add_subnode_optional_string(p_state,'telprim',v_telprim);
    web_json.add_subnode_optional_string(p_state,'director',v_director);
    web_json.add_subnode_optional_number(p_state,'blocked',v_blocked);
+   web_json.add_subnode_optional_string(p_state,'pricelist',v_pricelist);
+   if v_parent_id is null then
+    v_opened:=false;
+    for pr in (select t.cod,case when c.avanspp is null then t.suma_kontr else t.suma_kontr-t.suma_kontr*c.avanspp/100 end pret
+     from yslx_vcn1d_tt t,vcn0m_contracts_ext c
+     where c.contractid=t.contractid
+     and c.clientid=v_punct_id
+     and trunc(sysdate) between t.credit_from and t.credit_to)
+    loop
+     if not v_opened then
+      web_json.add_subnode_object(p_state,'pr');
+      web_json.begin_subnodes(p_state);
+      v_opened:=true;
+     end if;
+     web_json.add_subnode_number(p_state,''||pr.cod,pr.pret);
+    end loop;
+    if v_opened then
+     web_json.end_subnodes(p_state);
+    end if;
+   end if;
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -623,8 +649,25 @@ begin
 end;
 --------------------------------------------------------------------------------
 procedure store_products(p_state in out nocopy web_json.t_fill_state) is
+ v_user_id int:=sys_context('envun4','param_userid');
+ v_agent_id int;
+ v_sql long;
  v_tree_marfa_id0 int:=sys_context('envun4','tree_marfa_id0');
 begin
+ -- Collect pricelists
+ select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
+ v_sql:=query_puncts(v_agent_id);
+ --
+ delete from xsld where id='pl';
+ --
+ execute immediate 'insert into xsld (id,strsc)
+   select ''pl'',codprice||chr(47)||codgrp from (
+    select distinct c.codprice,c.codgrp
+    from tcn0m_contracts c,tmdb_docs d,('||v_sql||') m
+    where c.clientid=m.cod and sysdate between c.datastart and c.dataend
+    and c.codprice is not null and c.codgrp is not null and d.cod=c.contractid
+   )';
+ -- Export products
  web_json.add_subnode_array(p_state,'products');
  web_json.begin_subnodes(p_state);
  for p in (select u.cod,u.denumirea,u.clc_um_baz_t,t.id1--,t.group1,t.group2,t.group3
@@ -632,7 +675,9 @@ begin
   from tms_sysgrp t,vms_order_products u
   where t.id0=v_tree_marfa_id0
     and u.cod=t.sc
-    and exists (select null from tpr1d_perprlist where sc=t.sc and trunc(sysdate) between datastart and dataend)
+    and exists (select null from tpr1d_perprlist where sc=t.sc
+     and trunc(sysdate) between datastart and dataend
+     and codprice||chr(47)||codgrp in (select strsc from xsld where id='pl'))
   order by u.denumirea,u.cod)
  loop
   web_json.add_subnode_object(p_state);
@@ -642,9 +687,16 @@ begin
    web_json.add_subnode_string(p_state,'um',p.clc_um_baz_t);
    web_json.add_subnode_number(p_state,'cant',p.cant);
    web_json.add_subnode_number(p_state,'gr',p.id1);
-   --web_json.add_subnode_number(p_state,'g1',p.group1);
-   --web_json.add_subnode_number(p_state,'g2',p.group2);
-   --web_json.add_subnode_number(p_state,'g3',p.group3);
+   web_json.add_subnode_object(p_state,'pr');
+   web_json.begin_subnodes(p_state);
+   for pr in (select x.strsc,t.pretv
+     from tpr1d_perprlist t,xsld x
+     where t.sc=p.cod and x.strsc=t.codprice||chr(47)||t.codgrp and x.id='pl'
+     and trunc(sysdate) between t.datastart and t.dataend)
+   loop
+    web_json.add_subnode_number(p_state,pr.strsc,pr.pretv);
+   end loop;
+   web_json.end_subnodes(p_state);
   web_json.end_subnodes(p_state);
  end loop;
  web_json.end_subnodes(p_state);
@@ -1063,7 +1115,7 @@ begin
  write_log(v_start,'report_plan('||p_session||') end');
 end;
 --------------------------------------------------------------------------------
-procedure say(p_response clob)is
+procedure out(p_response clob)is
  c_max_portion constant binary_integer:=32760;
  v_length int:=nvl(dbms_lob.getlength(p_response),0);
  v_portion varchar2(32767);
