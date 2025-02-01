@@ -183,7 +183,7 @@
  <a v-if="!d.p.data.punct.blocked||!oval(d.a.data.lst.settings,'BlockedClientDisableInput')" class="js waves-effect waves-light btn right" onclick="app.newOrder()"><i class="material-icons">add</i></a>
 </div>
 <a v-for="o in d.t.OO" class="js collection-item row" :onclick="'app.showOrder('+o.id+')'">
- <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check_box':'check_box_outline_blank'}}</i>#{{o.id}}:&nbsp;</div>
+ <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check':''}}</i><b>#{{o.id}}:</b></div>
  <div class="col s3 l2">{{fmtd(o.dt)}}</div>
  <div class="col s6 l8">{{o.tp&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.tp))}}</div>
 </a>
@@ -253,7 +253,7 @@
 </div>
 <a v-for="o in d.t.OO" class="js collection-item row" :onclick="'app.showOrder('+o.id+')'"
  :class="oval((d.t.c=d.a.data.lst.puncts.find(p=>p.i==o.pt)),'blocked')?'blocked-bg':null">
- <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check_box':'check_box_outline_blank'}}</i>#{{o.id}}:&nbsp;</div>
+ <div class="col s3 l2 right-align"><i class="material-icons left">{{o.ready?'check':''}}</i><b>#{{o.id}}:</b></div>
  <div class="col s3 l2">{{fmtd(o.dt)}}</div>
  <div class="col s6 l8">{{oval(d.t.c)}}</div>
 </a>
