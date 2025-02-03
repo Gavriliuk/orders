@@ -28,27 +28,23 @@ app.vm=new Vue({el:'#app',data:{d:{a:{lang:tr.prototype.lang,title:'Orders',sign
   ,dp:app.vm.d.p.data.products.find(dp=>dp.i==p.i)})).filter(p=>p.dp&&p.dp.q>0).map(p=>({i:p.i,n:p.n,cant:p.cant,um:p.um,q:p.dp.q}))
  })).filter(g=>g.p.length)
 ,docpp:d=>{
-  const pg=app.vm.docpg()||[]
-  const result=[]
-  pg.forEach(g=>{
-   result.push({i:g.i,n:g.n,g:1})
-   g.p.forEach(p=>result.push(p))
-  })
-  return result
- }
-,price:(product_id,punct_id)=>{
-  const punct=app.vm.d.a.data.lst.puncts.find(p=>p.i==punct_id)
-  if(!punct)return 0
-  const client=punct.p?app.vm.d.a.data.lst.puncts.find(p=>p.i==punct.p):punct
-  if(!client)return 0
-  let price=client.pr?client.pr[product_id]:0
-  if(price)return price
-  const product=app.vm.d.a.data.lst.products.find(p=>p.i==product_id)
-  if(!product)return 0
-  price=client.pricelist&&product.pr?product.pr[client.pricelist]:0
-  if(price)return price
-  return 0
- }
+ const pg=app.vm.docpg()||[]
+ const result=[]
+ pg.forEach(g=>{
+  result.push({i:g.i,n:g.n,g:1})
+  g.p.forEach(p=>result.push(p))
+ })
+ return result
+},price:(product_id,client)=>{
+ if(!client)return 0
+ let price=client.pr?client.pr[product_id]:0
+ if(price)return price
+ const product=app.vm.d.a.data.lst.products.find(p=>p.i==product_id)
+ if(!product)return 0
+ price=client.pricelist&&product.pr?product.pr[client.pricelist]:0
+ if(price)return price
+ return 0
+}
 }})
 
 app.ts=()=>(new Date()).toTimeString().substr(0,8)
@@ -450,7 +446,7 @@ app.createOrder=close=>{
  if(app.vm.d.p.name!='order')return app.error(tr('Wrong page')+': '+app.vm.d.p.name)
  let id=1
  app.vm.d.a.data.doc.forEach(d=>{if(d.id>=id)id=d.id+1})
- const doc={id:id,pt:app.vm.d.p.data.punct,dt:app.vm.d.p.data.date}
+ const doc={id:id,pt:app.vm.d.p.data.punct,dt:app.vm.d.p.data.date,am:app.vm.d.p.data.amount}
  if(app.vm.d.p.data.type)doc.tp=app.vm.d.p.data.type
  if(app.vm.d.p.data.po)doc.po=app.vm.d.p.data.po
  if(app.vm.d.p.data.ready)doc.ready=true
@@ -470,6 +466,7 @@ app.saveOrder=close=>{
  if(doc.tp!=app.vm.d.p.data.type)doc.tp=app.vm.d.p.data.type
  if(app.vm.d.p.data.ready&&!doc.ready)doc.ready=true
  else if(doc.ready&&!app.vm.d.p.data.ready)delete doc.ready
+ doc.am=app.vm.d.p.data.amount
  doc.p=structuredClone(app.vm.d.p.data.products)
  app.backup('doc')
  if(close)app.showSuperPage()

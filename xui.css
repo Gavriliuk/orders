@@ -47,7 +47,7 @@ form input[type="submit"]:focus-visible {outline:inherit;color:yellow;botder:1px
 .collection.with-header .collection-header, .modal .modal-header
 {background-color:var(--color-head-bg);color:var(--color-head-fg)}
 .collection.with-header .collection-header a, .modal .modal-header a
-{color:var(--color-head-fg)}
+{color:var(--color-head-fg) !important}
 .collection .collection-item
 {background-color:var(--color-item-bg);color:var(--color-item-fg)}
 .collection a.collection-item
