@@ -1,6 +1,6 @@
 CREATE OR REPLACE package pg_web_orders_pwa authid current_user as
 --------------------------------------------------------------------------------
--- Last modification date: 20.10.24
+-- Last modification date: 02.02.25
 --------------------------------------------------------------------------------
 procedure local_service(p_request varchar2:=null);
 procedure remote_service(p_path varchar2,p_proc varchar2,p_param varchar2,p_request varchar2,p_response in out pg_web_base.t_response);
@@ -8,12 +8,11 @@ procedure test_service(p_request varchar2:=null);
 procedure test;
 --------------------------------------------------------------------------------
 end;
-
 /
 
 CREATE OR REPLACE package body pg_web_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 20.10.24
+-- Last modification date: 02.02.25
 --------------------------------------------------------------------------------
 -- HTTP Respond
 -- Input:
@@ -44,7 +43,7 @@ begin
 end;
 --------------------------------------------------------------------------------
 function log_add(p_request varchar2:=null,p_session int:=null)return int is
- v_parameter varchar2(4000):=substr(pg_web_base.g_parameter||'='||substr(p_request,1,4000),1,4000);
+ v_parameter varchar2(4000):=substr('?'||pg_web_base.g_parameter||'='||substr(p_request,1,4000),1,4000);
 begin
  return pg_web_base.log_add(p_session,v_parameter);
 end;
@@ -105,6 +104,8 @@ begin
  --
  pg_orders_web.init_session(v_session,v_user_id);
  --
+ bg_policy.initfilter_nrset_tree('');
+ --
  return v_session;
 end;
 --------------------------------------------------------------------------------
@@ -152,6 +153,12 @@ begin
    pg_orders_pwa.refresh_database(v_session);
   when 'dbexport' then
    pg_orders_pwa.export_database(v_session);
+  when 'dbreport-debt' then
+   pg_orders_pwa.report_debt(v_session);
+  when 'dbreport-plan' then
+   pg_orders_pwa.report_plan(v_session);
+  else
+   msg('Unknown command: '''||v_command||'''');
   end case;
  end if;
  --
@@ -371,5 +378,4 @@ begin
 end;
 --------------------------------------------------------------------------------
 end;
-
 /

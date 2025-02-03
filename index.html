@@ -47,13 +47,13 @@
 <nav><div class="nav-wrapper container"><table><tr>
  <td><div class="title">{{tr(d.p.title||d.a.title)}}</div></td>
  <td><ul class="right">
- <li v-for="lang in this.langs" class="right unsigned"><a class="js lang" :onclick="'app.lang(\''+lang+'\')'"><img height="32" width="32" :src="'lang-'+lang+'.svg'"/></a></li>
- <li v-if="d.p.name!='main'" class="nav-signed"><a class="js" onclick="app.showPage()"><i class="material-icons">home</i></a></li>
- <li class="nav-signed no-searching"><a class="js" onclick="app.search.show()"><i class="material-icons">search</i></a></li>
- <li class="nav-signed searching"><a class="js yellow-text" onclick="app.search.hide()"><i class="material-icons">search</i></a></li>
- <li v-if="d.a.not" class="nav-signed"><a class="js yellow-text" onclick="app.showMsg()">{{d.a.not}}<i class="material-icons right">notifications_active</i></a></li>
- <li v-else class="nav-signed"><a class="js" onclick="app.showPage('msgs')"><i class="material-icons">notifications_none</i></a></li>
- <li class="nav-signed"><a class="js" onclick="app.logout()"><i class="material-icons">exit_to_app</i></a></li>
+ <li v-for="lang in this.langs" class="right unsigned"><a class="js menu lang" :onclick="'app.lang(\''+lang+'\')'"><img height="32" width="32" :src="'lang-'+lang+'.svg'"/></a></li>
+ <li v-if="d.p.name!='main'" class="nav-signed"><a class="js menu" onclick="app.showPage()"><i class="material-icons">home</i></a></li>
+ <li class="nav-signed no-searching"><a class="js menu" onclick="app.search.show()"><i class="material-icons">search</i></a></li>
+ <li class="nav-signed searching"><a class="js menu yellow-text" onclick="app.search.hide()"><i class="material-icons">search</i></a></li>
+ <li v-if="d.a.not" class="nav-signed"><a class="js menu yellow-text" onclick="app.showMsg()">{{d.a.not}}<i class="material-icons right">notifications_active</i></a></li>
+ <li v-else class="nav-signed"><a class="js menu" onclick="app.showPage('msgs')"><i class="material-icons">notifications_none</i></a></li>
+ <li class="nav-signed"><a class="js menu" onclick="app.logout()"><i class="material-icons">exit_to_app</i></a></li>
  </ul></td>
 </tr></table></div></nav>
 </header>
@@ -136,8 +136,9 @@
  <span v-if="d.p.data.id" class="left">{{oval(d.a.data.lst.puncts.find(p=>p.i==d.p.data.id))}}</span>
 </div>
 <div v-for="c in d.a.data.lst.puncts.filter(p=>d.p.data?(p.p==d.p.data.id):!p.p)" class="collection-item row" :class="{'blocked-bg':c.blocked}">
-<a class="js col s12 l6" :onclick="'app.showSubPage(\'client\','+c.i+')'">{{c.i}}: {{c.n}}</a>
-<a v-if="d.a.data.lst.puncts.filter(p=>p.p==c.i).length" class="js col s12 l6 right-align" :onclick="'app.showSubPage(\'clients\','+c.i+')'">[{{d.a.data.lst.puncts.filter(p=>p.p==c.i).length}}]</a>
+<a class="col s12 l6" :class="{js:!c.ap}" :onclick="c.ap?null:('app.showSubPage(\'client\','+c.i+')')"
+ :js1="(d.t.CC=d.a.data.lst.puncts.filter(p=>p.p==c.i))?null:null">{{c.i}}: {{c.n}}</a>
+<a v-if="d.t.CC.length" class="js col s12 l6 right-align" :onclick="d.t.CC.length==1?('app.showSubPage(\'client\','+d.t.CC[0].i+')'):('app.showSubPage(\'clients\','+c.i+')')">[{{d.a.data.lst.puncts.filter(p=>p.p==c.i).length}}]</a>
 </div>
 <div v-if="!d.a.data.lst.puncts.filter(p=>d.p.data?(p.p==d.p.data.id):!p.p).length" class="collection-item center">{{tr('No data')}}</div>
 </div>
@@ -170,7 +171,7 @@
  <div class="col s12 l6">{{d.p.data.punct.director}}</div>
 </div>
 </div>
-<div v-if="d.t.PO.length" class="collection with-header flow-text no-select">
+<div v-if="!d.p.data.punct.ap&&d.t.PO.length" class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Pre-Orders')}}</div>
 <a v-for="o in d.t.PO" class="js collection-item row" :onclick="'app.newOrder('+o.i+')'">
  <div class="col s3 l2 right-align">#{{o.i}}:&nbsp;</div>
@@ -178,7 +179,7 @@
  <div class="col s6 l8">{{o.tp&&oval(d.a.data.lst.doctypes.find(t=>t.i==o.tp))}}</div>
 </a>
 </div>
-<div class="collection with-header flow-text no-select">
+<div v-if="!d.p.data.punct.ap" class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Orders to export')}}
  <a v-if="!d.p.data.punct.blocked||!oval(d.a.data.lst.settings,'BlockedClientDisableInput')" class="js waves-effect waves-light btn right" onclick="app.newOrder()"><i class="material-icons">add</i></a>
 </div>
@@ -189,7 +190,7 @@
 </a>
 <div v-if="!d.t.OO.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
-<div v-if="d.t.SO.length" class="collection with-header flow-text no-select">
+<div v-if="!d.p.data.punct.ap&&d.t.SO.length" class="collection with-header flow-text no-select">
 <div class="collection-header caption">{{tr('Orders exported')}}</div>
 <a v-for="o in d.t.SO" class="js collection-item row" :onclick="'app.showOrder('+o.id+')'">
  <div class="col s3 l2 right-align">#{{o.nr}}:&nbsp;</div>

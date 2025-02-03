@@ -209,6 +209,7 @@ app.showPage=(name,data)=>{
  //app.log('showPage',name,data)
  //app.log('showPage',name,(''+JSON.stringify(data)).substr(0,100))
  const setup=(title,index,key,value)=>{
+  if(name=='client'&&(!value||value.ap))return
   app.vm.d.t={}
   app.vm.d.p.name=name
   app.vm.d.p.data=data

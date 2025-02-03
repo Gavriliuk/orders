@@ -38,7 +38,7 @@ body
 
 nav {background-color:inherit}
 
-a {color:var(--color-ctrl)}
+a.js:not(.menu):not(.btn) {color:var(--color-ctrl)}
 
 .caption {color:var(--color-ctrl);font-weight:bold}
 form input[type="submit"] {color:var(--color-navi-fg);cursor:pointer}

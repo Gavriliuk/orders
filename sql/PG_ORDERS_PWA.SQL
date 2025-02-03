@@ -1,6 +1,6 @@
-CREATE OR REPLACE PACKAGE PANILINO.pg_orders_pwa as
+CREATE OR REPLACE package pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 27.01.25
+-- Last modification date: 02.02.25
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -11,7 +11,7 @@ procedure test;
 end;
 /
 
-CREATE OR REPLACE PACKAGE BODY PANILINO.pg_orders_pwa as
+CREATE OR REPLACE package body pg_orders_pwa as
 --------------------------------------------------------------------------------
 -- Last modification date: 27.01.25
 --------------------------------------------------------------------------------
@@ -402,6 +402,19 @@ begin
  return v_sql;
 end;
 --------------------------------------------------------------------------------
+procedure prepare_puncts is
+ c_puncts_id varchar2(10):='puncts';
+ v_user_id int:=sys_context('envun4','param_userid');
+ v_agent_id int;
+ v_sql long;
+begin
+ select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
+ v_sql:=query_puncts(v_agent_id);
+ delete from xsld where id=c_puncts_id;
+ execute immediate 'insert into xsld (id,sc,dep,sc1) select :1,cod,parent_cod,id_ruta from ('||v_sql||')' using c_puncts_id;
+ execute immediate 'insert into xsld (id,ap,sc) select id,1,dep from xsld a where id=:1 and dep not in (select sc from xsld where id=a.id)' using c_puncts_id;
+end;
+--------------------------------------------------------------------------------
 procedure store_settings(p_state in out nocopy web_json.t_fill_state) is
 begin
  web_json.add_subnode_object(p_state,'settings');
@@ -478,68 +491,46 @@ begin
 end;
 --------------------------------------------------------------------------------
 procedure store_puncts(p_state in out nocopy web_json.t_fill_state) is
- v_user_id int:=sys_context('envun4','param_userid');
- v_agent_id int;
- TYPE t_cusor IS REF CURSOR;
- v_cursor t_cusor;
- v_sql long;
- v_punct_id tms_univers.cod%type;
- v_punct_name tms_univers.denumirea%type;
- v_parent_id tms_univers.cod%type;
- v_route_id tms_univers.cod%type;
- v_addr_fact tms_org.addr_fact%type;
- v_address tms_org.adress%type;
- v_telefon tms_org.telefon%type;
- v_telprim tms_org.telprim%type;
- v_director tms_org.director%type;
- v_blocked tms_org.bloc_manual_status%type;
- v_pricelist varchar2(30);
  v_opened boolean;
 begin
- select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
+ web_json.add_subnode_array(p_state,'puncts');
+ web_json.begin_subnodes(p_state);
  --
- v_sql:=query_puncts(v_agent_id);
- --
- v_sql:='select m.cod,m.client,m.parent_cod,m.id_ruta,o.addr_fact
+ for c in (select x.sc,u.denumirea,x.dep,x.sc1,x.ap,o.addr_fact
   ,nvl(o.adress,p.adress)address,nvl(o.telefon,p.telefon)telefon
   ,nvl(o.telprim,p.telprim)telprim,nvl(o.director,p.director)director
   ,nvl(o.bloc_manual_status,p.bloc_manual_status)blocked
   ,(select codprice||chr(47)||codgrp from tcn0m_contracts
-   where clientid=m.cod and sysdate between datastart and dataend
+   where clientid=x.sc and sysdate between datastart and dataend
    and codprice is not null and codgrp is not null
    and contractid in (select cod from tmdb_docs))pricelist
-  from ('||v_sql||') m,vms_org o,vms_org p
-  where o.cod=m.cod
-    and p.cod(+)=m.parent_cod
-  order by m.client,m.cod';
- --
- web_json.add_subnode_array(p_state,'puncts');
- web_json.begin_subnodes(p_state);
- --
- open v_cursor for v_sql;
+  from xsld x,tms_univers u,vms_org o,vms_org p
+  where x.id='puncts'
+    and u.cod=x.sc
+    and o.cod=x.sc
+    and p.cod(+)=x.dep
+  order by u.denumirea,x.sc)
  loop
-  fetch v_cursor into v_punct_id,v_punct_name,v_parent_id,v_route_id
-   ,v_addr_fact,v_address,v_telefon,v_telprim,v_director,v_blocked,v_pricelist;
-  exit when v_cursor%notfound;
   web_json.add_subnode_object(p_state);
   web_json.begin_subnodes(p_state);
-   web_json.add_subnode_number(p_state,'i',v_punct_id);
-   web_json.add_subnode_string(p_state,'n',v_punct_name);
-   web_json.add_subnode_number(p_state,'r',v_route_id);
-   web_json.add_subnode_optional_number(p_state,'p',v_parent_id);
-   web_json.add_subnode_optional_string(p_state,'addr_fact',v_addr_fact);
-   web_json.add_subnode_optional_string(p_state,'address',v_address);
-   web_json.add_subnode_optional_string(p_state,'telefon',v_telefon);
-   web_json.add_subnode_optional_string(p_state,'telprim',v_telprim);
-   web_json.add_subnode_optional_string(p_state,'director',v_director);
-   web_json.add_subnode_optional_number(p_state,'blocked',v_blocked);
-   web_json.add_subnode_optional_string(p_state,'pricelist',v_pricelist);
-   if v_parent_id is null then
+   web_json.add_subnode_number(p_state,'i',c.sc);
+   web_json.add_subnode_string(p_state,'n',c.denumirea);
+   web_json.add_subnode_number(p_state,'r',c.sc1);
+   web_json.add_subnode_optional_number(p_state,'p',c.dep);
+   web_json.add_subnode_optional_boolean(p_state,'ap',c.ap is not null);
+   web_json.add_subnode_optional_string(p_state,'addr_fact',c.addr_fact);
+   web_json.add_subnode_optional_string(p_state,'address',c.address);
+   web_json.add_subnode_optional_string(p_state,'telefon',c.telefon);
+   web_json.add_subnode_optional_string(p_state,'telprim',c.telprim);
+   web_json.add_subnode_optional_string(p_state,'director',c.director);
+   web_json.add_subnode_optional_number(p_state,'blocked',c.blocked);
+   web_json.add_subnode_optional_string(p_state,'pricelist',c.pricelist);
+   if c.dep is null then
     v_opened:=false;
-    for pr in (select t.cod,case when c.avanspp is null then t.suma_kontr else t.suma_kontr-t.suma_kontr*c.avanspp/100 end pret
-     from yslx_vcn1d_tt t,vcn0m_contracts_ext c
-     where c.contractid=t.contractid
-     and c.clientid=v_punct_id
+    for pr in (select t.cod,case when x.avanspp is null then t.suma_kontr else t.suma_kontr-t.suma_kontr*x.avanspp/100 end pret
+     from yslx_vcn1d_tt t,vcn0m_contracts_ext x
+     where x.contractid=t.contractid
+     and x.clientid=c.sc
      and trunc(sysdate) between t.credit_from and t.credit_to)
     loop
      if not v_opened then
@@ -555,6 +546,7 @@ begin
    end if;
   web_json.end_subnodes(p_state);
  end loop;
+ --
  web_json.end_subnodes(p_state);
 end;
 --------------------------------------------------------------------------------
@@ -595,6 +587,8 @@ end;
 procedure store_groups(p_state in out nocopy web_json.t_fill_state) is
  v_tree_marfa_id0 int:=sys_context('envun4','tree_marfa_id0');
 begin
+ --for c in (select count(*) n from tms_sysgrph where id0=v_tree_marfa_id0 and group2=0 and length(coment)>1) loop web_json.add_subnode_number(p_state,'G0',c.n);end loop;
+ --
  web_json.add_subnode_array(p_state,'groups');
  web_json.begin_subnodes(p_state);
  for g1 in (select id1,coment,group1
@@ -649,24 +643,33 @@ begin
 end;
 --------------------------------------------------------------------------------
 procedure store_products(p_state in out nocopy web_json.t_fill_state) is
- v_user_id int:=sys_context('envun4','param_userid');
- v_agent_id int;
- v_sql long;
  v_tree_marfa_id0 int:=sys_context('envun4','tree_marfa_id0');
 begin
+-- bg_policy.initfilter_nrset_tree('');
+-- for c in (select stragg(id||nvl2(used,'!','')) n from xnrsetm) loop web_json.add_subnode_string(p_state,'xnrsetm',c.n);end loop;
+-- for c in (select stragg(id) n from xnrset) loop web_json.add_subnode_string(p_state,'xnrset',c.n);end loop;
+-- for c in (select stragg(id) n from (SELECT TRIM(TO_CHAR(T1.ID_MASK,'0'))||TRIM(TO_CHAR(T2.ID_MASK,'00')) id
+--   FROM VMS_NRSETM_USER T1,VMS_NRSETM_USER T2
+--   WHERE T1.ID_LEVEL=1 AND T1.USED=1 AND T2.ID_LEVEL=2 AND T2.USED=1)) loop web_json.add_subnode_string(p_state,'SQL',c.n);end loop;
+-- web_json.add_subnode_string(p_state,'policy',BG_POLICY.POLICY_NRSET_TREE('FMP','VMS_NRSETM_USER'));
+-- for c in (select stragg(id||nvl2(used,'!','')) n from vms_nrsetm_user) loop web_json.add_subnode_string(p_state,'vms_nrsetm_user',c.n);end loop;
+-- for c in (select count(*) n from VMS_NRSETM_USER) loop web_json.add_subnode_number(p_state,'VMS_NRSETM_USER',c.n);end loop;
+-- for c in (select stragg(id||nvl2(used,'!','')) n from vms_nrsetm) loop web_json.add_subnode_string(p_state,'vms_nrsetm',c.n);end loop;
+-- for c in (select count(*) n from VMS_NRSETM) loop web_json.add_subnode_number(p_state,'VMS_NRSETM',c.n);end loop;
+-- for c in (select count(*) n from tcn0m_contracts) loop web_json.add_subnode_number(p_state,'TCN0M_CONTRACTS',c.n);end loop;
+-- for c in (select count(*) n from tmdb_docs) loop web_json.add_subnode_number(p_state,'TMDB_DOCS',c.n);end loop;
  -- Collect pricelists
- select id into v_agent_id from vms_order_agents where cod_user=v_user_id;
- v_sql:=query_puncts(v_agent_id);
- --
  delete from xsld where id='pl';
  --
- execute immediate 'insert into xsld (id,strsc)
-   select ''pl'',codprice||chr(47)||codgrp from (
-    select distinct c.codprice,c.codgrp
-    from tcn0m_contracts c,tmdb_docs d,('||v_sql||') m
-    where c.clientid=m.cod and sysdate between c.datastart and c.dataend
-    and c.codprice is not null and c.codgrp is not null and d.cod=c.contractid
-   )';
+ insert into xsld (id,strsc)
+ select 'pl',codprice||chr(47)||codgrp from (
+  select distinct c.codprice,c.codgrp
+  from tcn0m_contracts c,tmdb_docs d,(select sc from xsld where id='puncts') x
+  where c.clientid=x.sc
+  and sysdate between c.datastart and c.dataend
+  and c.codprice is not null and c.codgrp is not null
+  and d.cod=c.contractid
+ );
  -- Export products
  web_json.add_subnode_array(p_state,'products');
  web_json.begin_subnodes(p_state);
@@ -800,6 +803,9 @@ begin
  if p_session is not null then
   web_json.add_subnode_number(v_state,'session',p_session);
  end if;
+ --
+ prepare_puncts;
+ --for c in (select count(*) n from xsld where id='puncts') loop web_json.add_subnode_number(v_state,'PUNCTS',c.n);end loop;
  --
  store_settings(v_state);
  --
@@ -938,7 +944,7 @@ procedure export_database(p_session int) is
   pkg_orders_docs.comanda_gfc_encashment(v_doc_nr);
   --
   -- verificare gratuitati
-  --pk_bc_promo.check_gratuitate(null,v_doc_nr,'orders'); 
+  --pk_bc_promo.check_gratuitate(null,v_doc_nr,'orders');
   --
   --commit;
   --
