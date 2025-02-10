@@ -1,6 +1,6 @@
-CREATE OR REPLACE package pg_orders_pwa as
+CREATE OR REPLACE PACKAGE pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 02.02.25
+-- Last modification date: 10.02.25
 --------------------------------------------------------------------------------
 procedure refresh_database(p_session int);
 procedure export_database(p_session int);
@@ -9,11 +9,12 @@ procedure report_plan(p_session int);
 procedure test;
 --------------------------------------------------------------------------------
 end;
+
 /
 
-CREATE OR REPLACE package body pg_orders_pwa as
+CREATE OR REPLACE PACKAGE BODY pg_orders_pwa as
 --------------------------------------------------------------------------------
--- Last modification date: 27.01.25
+-- Last modification date: 10.02.25
 --------------------------------------------------------------------------------
 function date_format return varchar2 is begin return 'yyyy-mm-dd'; end;
 function time_format return varchar2 is begin return 'yyyy-mm-dd hh24:mi:ss'; end;
@@ -412,7 +413,7 @@ begin
  v_sql:=query_puncts(v_agent_id);
  delete from xsld where id=c_puncts_id;
  execute immediate 'insert into xsld (id,sc,dep,sc1) select :1,cod,parent_cod,id_ruta from ('||v_sql||')' using c_puncts_id;
- execute immediate 'insert into xsld (id,ap,sc) select id,1,dep from xsld a where id=:1 and dep not in (select sc from xsld where id=a.id)' using c_puncts_id;
+ execute immediate 'insert into xsld (id,ap,sc) select distinct id,1,dep from xsld a where id=:1 and dep not in (select sc from xsld where id=a.id)' using c_puncts_id;
 end;
 --------------------------------------------------------------------------------
 procedure store_settings(p_state in out nocopy web_json.t_fill_state) is
@@ -882,13 +883,15 @@ procedure export_database(p_session int) is
   --Creating a document with these values and storing the nrdoc in v_doc_nr
   envun4.envsetvalue('data$livr',v_doc_date);
   --
-  begin
-   select to_number(subset) into v_l1_nrset from vms_order_tip_doc where prn_orders=8 and id=v_doc_type;
-  exception when no_data_found then
-   msg('Invalid order type: '||v_doc_type);
-  end;
-  --
-  v_nrset_complete:=to_number(v_l1_nrset||0||v_l3_nrset);
+  if v_l3_nrset>0 then
+   begin
+    select to_number(subset) into v_l1_nrset from vms_order_tip_doc where prn_orders=8 and id=v_doc_type;
+   exception when no_data_found then
+    msg('Invalid order type: '||v_doc_type);
+   end;
+   --
+   v_nrset_complete:=to_number(v_l1_nrset||0||v_l3_nrset);
+  end if;
   ---
   insert into tmdb_docs (datamanual,sysfid,userid,valuta,tip,at2,nrset)
   values (v_doc_date,v_sysfid,v_userid,upper('LEI'),upper('P'),2,v_nrset_complete)
@@ -960,7 +963,7 @@ begin
  --
  select nvl(min(username),' ') into v_username from xusers where cod=v_userid;
  --
- select to_number(value)
+ select min(to_number(value))
  into v_l3_nrset
  from a$adp$v
  where obj_id=(select obj_id from xusers where cod=v_userid/*342*/)
@@ -1155,4 +1158,5 @@ begin
 end;
 --------------------------------------------------------------------------------
 end;
+
 /
