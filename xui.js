@@ -97,7 +97,6 @@ app.search={
 ,find:x=>getSelection().empty()||setTimeout(e=>app.search.next(),100)
 ,next:x=>find(document.getElementById('search-input').value)
 ,onkeydown:e=>{
-  app.log(e)
   if(e.keyCode==13)app.search.next()||app.search.find()
   else if(e.keyCode==27)app.search.hide()
  }
@@ -429,6 +428,7 @@ app.editProductQty=id=>{
  app.vm.d.m.qty.cant=0
  app.vm.d.p.data.products.filter(p=>p.i==id).forEach(p=>app.vm.d.m.qty.cant+=p.q)
  const modal=M.Modal.getInstance(document.getElementById('modal-quantity'))
+ if(!modal.options.onOpenEnd)modal.options.onOpenEnd=_=>{with(document.getElementById('input-quantity'))select()||focus()}
  modal.open()
 }
 
