@@ -331,13 +331,14 @@
  <a v-if="!d.p.data.readOnly" class="js waves-effect waves-light btn right" onclick="app.addProducts()"><i class="material-icons">add</i></a>
 </div>
 <a v-for="p in d.t.P" :class="p.g?'collection-group center':'js collection-item row'"
-  :onclick="p.g||d.p.data.readOnly?null:'app.editProductQty('+p.i+')'">
+  :onclick="p.g||d.p.data.readOnly?null:'app.editProductQty('+p.i+')'"
+  :js1="(d.t.pr=price(p.i,d.t.client))?null:null">
  <div v-if="p.g" class="collection-group center bold">{{p.n}}</div>
- <div v-if="!p.g" class="col s8 l4">{{p.i}}: {{p.n}}</div>
- <div v-if="!p.g" class="col s4 l2 right-align bold">{{fmtN2(price(p.i,d.t.client))}}</div>
- <div v-if="!p.g" class="col s4 l2 right-align bold accent-fg">{{p.q}}</div>
- <div v-if="!p.g" class="col s4 l2 right-align">{{p.cant?'x':''}} {{p.cant||''}}</div>
- <div v-if="!p.g" class="col s4 l2">&nbsp;({{p.um}})</div>
+ <div v-if="!p.g" class="col s12 l4">{{p.i}}: {{p.n}}</div>
+ <div v-if="!p.g" class="col s3 l2 right-align bold">{{fmtN2(d.t.pr)}}</div>
+ <div v-if="!p.g" class="col s3 l2 right-align bold accent-fg">{{p.q}}</div>
+ <div v-if="!p.g" class="col s3 l2">{{p.cant?'x ':''}}{{p.cant||''}}{{!p.cant^!p.um?'&nbsp;':''}}({{p.um}})</div>
+ <div v-if="!p.g" class="col s3 l2 right-align">{{d.t.pr?fmtN2(d.t.pr*p.q):'&nbsp;'}}</div>
 </a>
 <div v-if="!d.t.P.length" class="collection-item center">{{tr('No data')}}</div>
 </div>
@@ -581,12 +582,14 @@
    </a>
    <div v-if="d.m.products.GG.length&&d.m.products.PP.length" class="collection-group center bold">{{tr('Products')}}</div>
    <a v-for="p in d.m.products.PP" class="js collection-item wide row"
-    :onclick="'app.editProductQty('+p.i+')'">
-    <div class="col s8 l4">{{p.i}}: {{p.n}}</div>
-    <div class="col s4 l2 right-align bold">{{fmtN2(price(p.i,d.t.client))}}</div>
-    <div class="col s4 l2 right-align bold accent-fg">{{oval(d.p.data.products.find(t=>t.i==p.i),'q')}}</div>
-    <div class="col s4 l2 right-align">{{p.cant?('x '+p.cant):''}}</div>
-    <div class="col s4 l2">&nbsp;({{p.um}})</div>
+    :onclick="'app.editProductQty('+p.i+')'"
+    :js1="(d.m.products.pr=price(p.i,d.t.client))?null:null"
+    :js2="(d.m.products.q=oval(d.p.data.products.find(t=>t.i==p.i),'q'))?null:null">
+    <div class="col s12 l4">{{p.i}}: {{p.n}}</div>
+    <div class="col s3 l2 right-align bold">{{fmtN2(d.m.products.pr)}}</div>
+    <div class="col s3 l2 right-align bold accent-fg">{{d.m.products.q||'&nbsp;'}}</div>
+    <div class="col s3 l2">{{p.cant?'x ':''}}{{p.cant||''}}{{!p.cant^!p.um?'&nbsp;':''}}({{p.um}})</div>
+    <div class="col s3 l2 right-align">{{(d.m.products.pr&&d.m.products.q)?fmtN2(d.m.products.pr*d.m.products.q):'&nbsp;'}}</div>
    </a>
    <div v-if="!d.m.products.GG.length&&!d.m.products.PP.length" class="collection-item center">{{tr('No data')}}</div>
   </div>
